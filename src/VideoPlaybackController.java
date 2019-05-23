@@ -64,7 +64,6 @@ public class VideoPlaybackController implements Runnable{
 	public void cleanup() {
 		exit = true;
 		
-		killMpv();
 		removePipe();
 		
 		if (player != null) {
@@ -122,26 +121,6 @@ public class VideoPlaybackController implements Runnable{
 	        }
 		}
 		
-	}
-
-	
-	private void killMpv() {
-		String cmd = "kill $(ps aux | grep -v grep | grep \"mpv -wid "+windowId+"\" | awk '{print $2}')";
-		System.out.println(cmd);
-		try {
-            Process process = 
-                new ProcessBuilder(new String[] {"bash","-c", cmd})
-                    .redirectErrorStream(true)
-                    .start();
-            BufferedReader br = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
-                String line = null;
-                while ( (line = br.readLine()) != null ) {
-                	System.out.println(line);
-                }
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
 	}
 	
 	private void removePipe() {

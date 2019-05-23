@@ -1,8 +1,5 @@
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -21,7 +18,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class ShinobiMonitor implements Runnable {
+public class ShinobiMonitor {
 	public String mid;
 	public String name;
 	public String stream;
@@ -57,8 +54,7 @@ public class ShinobiMonitor implements Runnable {
 		
 		// only load if not already in hashmap
 		if (!videos.containsKey(sdf.format(start_date))) {
-			Thread t1 = new Thread(this);
-			t1.start();		
+			get_videos();
 		}
 		loadingVideos = false;
 		
@@ -92,13 +88,20 @@ public class ShinobiMonitor implements Runnable {
 	
 	public String getVideoFilename(Date date, int index) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
+		if (index == -1) {
+			return null;
+		}
+			
 		System.out.println("Filename: "+videos.get(sdf.format(date)).get(index).filename);
+			
 		return videos.get(sdf.format(date)).get(index).filename;
 	}
 	
 	// mpv uses seconds for seek pos
 	public int getVideoFileSeekPos(Date date, int index) {
+		if (index == -1) {
+			return 0;
+		}
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		
 		long seconds = (date.getTime() - videos.get(sdf.format(date)).get(index).startTime.getTime()) / 1000;
@@ -108,8 +111,7 @@ public class ShinobiMonitor implements Runnable {
 		
 	}
 		
-	@Override
-	public void run() {
+	public void get_videos() {
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 						

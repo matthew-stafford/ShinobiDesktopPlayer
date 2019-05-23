@@ -1,89 +1,48 @@
-import java.awt.datatransfer.DataFlavor;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Random;
-import java.util.Set;
 import java.util.TimeZone;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.TreeMap;
 
-import javax.swing.JList;
-import javax.swing.TransferHandler;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.ListSelectionModel;
+import javax.swing.LookAndFeel;
+import javax.swing.SwingConstants;
+import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.plaf.basic.BasicInternalFrameUI;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableModel;
 
-import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Wini;
 
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.DefaultListModel;
-import javax.swing.GroupLayout;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import java.awt.Color;
-import javax.swing.JButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.ActionEvent;
-import javax.swing.JPopupMenu;
-import javax.swing.JRootPane;
-
-import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.image.ComponentSampleModel;
-
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-
-import java.awt.GridLayout;
-import java.awt.Point;
-import java.awt.Canvas;
-import java.awt.Dimension;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JToggleButton;
-import javax.swing.ImageIcon;
-import java.awt.Font;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.ListSelectionModel;
-import javax.swing.ToolTipManager;
-
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.SwingConstants;
 
 /**
  * @author Matthew Stafford
@@ -100,46 +59,39 @@ public class PlayerUI extends javax.swing.JFrame {
 	private TimePeriod playbackTimePeriod = TimePeriod.AM;
 
     public PlayerUI() {
-    	addWindowListener(new WindowAdapter() {
-    		@Override
-    		public void windowClosing(WindowEvent e) {
-    			// streams
-    			String cmd1 = "pkill -f \"mpv --no-cache --volume 0 --keep-open --profile=low-latency -wid\"";
-    			System.out.println(cmd1);
-    			try {
-    	            Process process = 
-    	                new ProcessBuilder(new String[] {"bash","-c", cmd1})
-    	                    .redirectErrorStream(true)
-    	                    .start();
-    	            BufferedReader br = new BufferedReader(
-    	                    new InputStreamReader(process.getInputStream()));
-    	                String line = null;
-    	                while ( (line = br.readLine()) != null ) {
-    	                	System.out.println(line);
-    	                }
-    	        } catch (Exception ex) {
-    	        	ex.printStackTrace();
-    	        }
-    			// playback
-    			String cmd2 = "pkill -f \"mpv --profile=low-latency --start=\"";
-    			System.out.println(cmd1);
-    			try {
-    	            Process process = 
-    	                new ProcessBuilder(new String[] {"bash","-c", cmd2})
-    	                    .redirectErrorStream(true)
-    	                    .start();
-    	            BufferedReader br = new BufferedReader(
-    	                    new InputStreamReader(process.getInputStream()));
-    	                String line = null;
-    	                while ( (line = br.readLine()) != null ) {
-    	                	System.out.println(line);
-    	                }
-    	        } catch (Exception ex) {
-    	        	ex.printStackTrace();
-    	        }
-    		}
-    	});
-		
+    	
+    	addWindowListener(new WindowListener() {
+			
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			
+			@Override
+			public void windowIconified(WindowEvent e) {			}
+			
+			@Override
+			public void windowDeiconified(WindowEvent e) {			}
+			
+			@Override
+			public void windowDeactivated(WindowEvent e) {			}
+			
+			@Override
+			public void windowClosing(WindowEvent e) {
+				new MPVManager("").KillAll();			
+			}
+			
+			@Override
+			public void windowClosed(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+    	
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         btnLive = new javax.swing.JButton();
@@ -147,7 +99,8 @@ public class PlayerUI extends javax.swing.JFrame {
         btnLive.setEnabled(false);
         btnLive.setIcon(new ImageIcon("assets/live.png"));
         btnLive.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent arg0) {
+        	@Override
+			public void actionPerformed(ActionEvent arg0) {
         		updatePlayMode(PlayMode.Live);
         	}
         });
@@ -155,7 +108,8 @@ public class PlayerUI extends javax.swing.JFrame {
         btnPlayback.setToolTipText("Playback");
         btnPlayback.setIcon(new ImageIcon("assets/playback.png"));
         btnPlayback.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {        		
+        	@Override
+			public void actionPerformed(ActionEvent e) {        		
         		updatePlayMode(PlayMode.Playback);
         	}
         });
@@ -166,7 +120,8 @@ public class PlayerUI extends javax.swing.JFrame {
         jSlider1 = new javax.swing.JSlider();
         jSlider1.setToolTipText("");
         jSlider1.addChangeListener(new ChangeListener() {
-        	public void stateChanged(ChangeEvent e) {
+        	@Override
+			public void stateChanged(ChangeEvent e) {
         		if (lblTime != null) {
 	        		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss dd MMM yyyy");
 	        		lblTime.setText(sdf.format(getTimeFromSlider()));
@@ -177,6 +132,11 @@ public class PlayerUI extends javax.swing.JFrame {
         	@Override
         	public void mouseReleased(MouseEvent e) {
         		System.out.println(getTimeFromSlider());
+        		for (Component c : jPanel3.getComponents()) {
+        			if (c instanceof VideoFrame) {
+        				((VideoFrame) c).playVideoPlayback(getTimeFromSlider(), false);
+        			}
+        		}
         	}
         });
         jSlider1.setEnabled(false);
@@ -190,7 +150,7 @@ public class PlayerUI extends javax.swing.JFrame {
        
         Random r = new Random();
         
-        this.WINDOW_TITLE = "Shinobi Desktop Player "+r.nextInt(1000000);
+        PlayerUI.WINDOW_TITLE = "Shinobi Desktop Player "+r.nextInt(1000000);
         
         setTitle(WINDOW_TITLE);
 
@@ -258,7 +218,8 @@ public class PlayerUI extends javax.swing.JFrame {
         table = new JTable() {
         	   private static final long serialVersionUID = 1L;
 
-               public boolean isCellEditable(int row, int column) {                
+               @Override
+			public boolean isCellEditable(int row, int column) {                
                        return false;               
                };
         };
@@ -355,7 +316,8 @@ public class PlayerUI extends javax.swing.JFrame {
         jSlider1.setValue(hours+minutes);
         
         btnAm.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent arg0) {
+        	@Override
+			public void actionPerformed(ActionEvent arg0) {
         		if (playbackTimePeriod == TimePeriod.PM) {
         			btnAm.setText("PM");
         			playbackTimePeriod = TimePeriod.AM;
@@ -485,25 +447,11 @@ public class PlayerUI extends javax.swing.JFrame {
     
 
     public static void main(String args[]) {
-        try {
-        	// set nimbus look & feel, ubuntu look & feel jslider is invisible?
-        	for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        	
-        	
-        	
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
         
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
             	try {
-                    
             		// load host & apikey
                 	Wini ini = new Wini(new File("config.ini"));
                 	String host = ini.get("Config", "host");
@@ -526,6 +474,13 @@ public class PlayerUI extends javax.swing.JFrame {
                 	    valid = false;
                 	} 
                 	
+                	if (!valid) {
+                		System.out.println("Ini not configured, exiting");
+                		System.exit(0);
+                	} else {
+                		System.out.println("Everything looks ok, continuing");
+                	}
+                	
                 	// start creating UI
                 	// check API is valid
                 	PlayerUI ui = new PlayerUI();
@@ -535,9 +490,12 @@ public class PlayerUI extends javax.swing.JFrame {
                     	JOptionPane.showMessageDialog(null, "API Key is invalid.", "Error", JOptionPane.ERROR_MESSAGE);	
                 	    valid = false;
                     }
-                	
+
                 	if (!valid) {
+                		System.out.println("Ini not configured, exiting");
                 		System.exit(0);
+                	} else {
+                		System.out.println("Everything looks ok, continuing");
                 	}
                 	
                 	ui.initShinobi();

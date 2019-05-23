@@ -93,7 +93,7 @@ public class VideoLayout extends JPanel {
 		
 		System.out.println("Launching mpv");
 		// load stream using mpv		
-		frame.playVideoPlayback(time);
+		frame.playVideoPlayback(time, true);
 		// updateLayout
 		updateLayout();
 	}
