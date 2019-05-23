@@ -455,7 +455,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			public void run() {
             	try {
             		// load host & apikey
-                	Wini ini = new Wini(new File("config.ini"));
+                	Wini ini = new Wini(getClass().getClassLoader().getResource("config.ini"));
                 	String host = ini.get("Config", "host");
                 	String api = ini.get("Config", "api_key");
                 	String groupKey = ini.get("Config", "group_key");
