@@ -16,10 +16,10 @@ public class MPVManager implements Runnable {
 	public String getValueFromResult(String json, String key) {
 		JsonElement jelement = new JsonParser().parse(json);
 		JsonObject json_data = jelement.getAsJsonObject();
-		if (json_data.get(key) != null) {
+		if (json_data.get(key) != null && !json_data.get(key).isJsonNull()) {
 			return json_data.get(key).getAsString();
 		}
-		return null;
+		return "";
 	}
 	
 	public String sendCommand(String cmd) {

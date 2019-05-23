@@ -183,13 +183,10 @@ public class VideoFrame extends JInternalFrame {
 						System.out.println("Video file is different, requesting new video + seek");
 						String url = monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video;
 						System.out.println("Loading URL: "+url);
-						
-						String result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"loadfile\", \""+url+"\"] }' | socat - /tmp/cctv_"+windowId),"data");
-						System.out.println("result="+result);
 						int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);
-						System.out.println("Setting seek pos : "+seekPos);
-						result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"time-pos\", "+seekPos+"] }' | socat - /tmp/cctv_"+windowId),"data");
+						String result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"loadfile\", \""+url+"\", \"replace\", \"start="+seekPos+"\"] }' | socat - /tmp/cctv_"+windowId),"data");
 						System.out.println("result="+result);
+						
 					}
 				} else {
 					videoCanvas._status = videoCanvas._status.NoPlaybackVideo;

@@ -44,7 +44,7 @@ public class ShinobiMonitor {
 		
 		if (sdf.format(start_date).equals(sdf.format(Calendar.getInstance().getTime()))) {
 			// if day == today then clear since updated videos could be available for playback
-			videos.clear();
+			// videos.clear();
 		} 
 				
 		Calendar cal = Calendar.getInstance();
