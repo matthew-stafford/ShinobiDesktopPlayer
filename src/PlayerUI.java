@@ -60,6 +60,8 @@ public class PlayerUI extends javax.swing.JFrame {
 
     public PlayerUI() {
     	
+    	ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    	
     	addWindowListener(new WindowListener() {
 			
 			@Override
@@ -97,7 +99,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnLive = new javax.swing.JButton();
         btnLive.setToolTipText("Live");
         btnLive.setEnabled(false);
-        btnLive.setIcon(new ImageIcon("assets/live.png"));
+        btnLive.setIcon(new ImageIcon(getClass().getClassLoader().getResource("assets/live.png")));
         btnLive.addActionListener(new ActionListener() {
         	@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -106,7 +108,7 @@ public class PlayerUI extends javax.swing.JFrame {
         });
         btnPlayback = new javax.swing.JButton();
         btnPlayback.setToolTipText("Playback");
-        btnPlayback.setIcon(new ImageIcon("assets/playback.png"));
+        btnPlayback.setIcon(new ImageIcon(classLoader.getResource("assets/playback.png")));
         btnPlayback.addActionListener(new ActionListener() {
         	@Override
 			public void actionPerformed(ActionEvent e) {        		
@@ -166,7 +168,7 @@ public class PlayerUI extends javax.swing.JFrame {
         
         JButton btnSettings = new JButton("");
         btnSettings.setEnabled(false);
-        btnSettings.setIcon(new ImageIcon("assets/settings.png"));
+        btnSettings.setIcon(new ImageIcon(classLoader.getResource("assets/settings.png")));
         
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1Layout.setHorizontalGroup(

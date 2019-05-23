@@ -78,18 +78,18 @@ public class VideoFrame extends JInternalFrame {
 			
 			@Override
 			public void componentShown(ComponentEvent e) {
-				// TODO Auto-generated method stub
+				reSize(e.getComponent().getWidth(),e.getComponent().getHeight());
 			}
 			
 			@Override
 			public void componentResized(ComponentEvent e) {
-				reSize(getWidth(),getHeight());
+				reSize(e.getComponent().getWidth(),e.getComponent().getHeight());
 				
 			}
 			
 			@Override
 			public void componentMoved(ComponentEvent e) {
-				// TODO Auto-generated method stub
+				reSize(e.getComponent().getWidth(),e.getComponent().getHeight());
 			}
 			
 			@Override
