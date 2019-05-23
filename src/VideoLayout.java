@@ -2,6 +2,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -29,12 +31,13 @@ public class VideoLayout extends JPanel {
 			
 			@Override
 			public void componentShown(ComponentEvent e) {
-				
+				updateLayout();
 			}
 			
 			@Override
 			public void componentResized(ComponentEvent e) {
 				updateLayout();
+				
 			}
 			
 			@Override
@@ -48,6 +51,7 @@ public class VideoLayout extends JPanel {
 				
 			}
 		});
+		
 	}
 	
 	private void updateLayout() {
@@ -96,6 +100,10 @@ public class VideoLayout extends JPanel {
 		frame.playVideoPlayback(time, true);
 		// updateLayout
 		updateLayout();
+		
+		System.out.println("Attempting to fix width/height");
+		
+		frame.videoCanvas.setSize(frame.getWidth(), frame.getHeight());
 	}
 	
 	
@@ -143,6 +151,7 @@ public class VideoLayout extends JPanel {
 		// updateLayout
 		updateLayout();
 		
+		frame.videoCanvas.setSize(frame.getWidth(), frame.getHeight());
 	}
 	
 	private void addWindowId(VideoFrame frame) {
