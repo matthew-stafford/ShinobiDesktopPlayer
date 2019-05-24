@@ -1,4 +1,4 @@
-# ShinobiDesktopPlayer
+# Shinobi Desktop Player
 Shinobi CCTV player for linux desktops. Allows playback of live streams and recorded video files using Shinobi Systems CCTV API.
 
 <h2>System Requirements</h2>
