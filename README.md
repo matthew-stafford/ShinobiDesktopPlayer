@@ -11,7 +11,7 @@ sudo apt install xwininfo
 sudo apt install mpv
 
 <h2>Instructions</h2>
-Download gzipped archive and extract .jar file. Open a terminal and ensure it is executable by typing 'chmod +x /path/to/ShinobiDesktopPlayer.jar'
+Download latest release from <a href="https://github.com/matthew-stafford/ShinobiDesktopPlayer/releases" target="_blank">here</a> and extract .jar file. Open a terminal and ensure it is executable by typing 'chmod +x /path/to/ShinobiDesktopPlayer.jar'
 
 Double click .jar file to open or type 'java -jar ShinobiDesktopPlayer.jar' in terminal to launch.
 
