@@ -11,13 +11,17 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -55,6 +59,9 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static HashMap<String, VideoFrame> videoFrames = new HashMap<String, VideoFrame>();
 	public static Dimension full_screen_size = new Dimension();
 	public static PlayMode PLAY_MODE = PlayMode.Live;
+	public static String host;
+	public static String apiKey;
+	public static String groupKey;
 	public static String WINDOW_TITLE;
 	private TimePeriod playbackTimePeriod = TimePeriod.AM;
 
@@ -167,7 +174,7 @@ public class PlayerUI extends javax.swing.JFrame {
         JComboBox comboBox = new JComboBox();
         
         JButton btnSettings = new JButton("");
-        btnSettings.setEnabled(false);
+        btnSettings.setEnabled(true);
         btnSettings.setIcon(new ImageIcon(classLoader.getResource("assets/settings.png")));
         
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -303,7 +310,7 @@ public class PlayerUI extends javax.swing.JFrame {
         Calendar cal = Calendar.getInstance();
         System.out.println(dateFormat.format(cal.getTime()));
         
-        JButton btnAm = new JButton("PM");
+        btnAm = new JButton("PM");
         btnAm.setEnabled(false);
         if (dateFormat.format(cal.getTime()).equalsIgnoreCase("pm")) {
 			playbackTimePeriod = TimePeriod.PM;
@@ -447,7 +454,10 @@ public class PlayerUI extends javax.swing.JFrame {
         addMonitorsToList(api.getMonitors());
     }
     
-
+    public static void loadProperties() {
+    	
+    }
+    
     public static void main(String args[]) {
         
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -455,51 +465,62 @@ public class PlayerUI extends javax.swing.JFrame {
 			public void run() {
             	try {
             		// load host & apikey
-                	Wini ini = new Wini(getClass().getClassLoader().getResource("config.ini"));
-                	String host = ini.get("Config", "host");
-                	String api = ini.get("Config", "api_key");
-                	String groupKey = ini.get("Config", "group_key");
+            		String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+            		String appConfigPath = rootPath + "shinobidesktopplayer.properties";
+            		
+            		File file = new File(appConfigPath);
+            		if (!file.exists()) 
+            			file.createNewFile();
+            		
+            		Properties appProps = new Properties();
+            		appProps.load(new FileInputStream(appConfigPath));
+            		
+                	host = appProps.getProperty("host");
+                	apiKey = appProps.getProperty("api_key");
+                	groupKey = appProps.getProperty("group_key");
+                	
+                	System.out.println("Host: "+host);
+                	System.out.println("API: "+apiKey);
+                	System.out.println("GroupKey: "+groupKey);
                 	
                 	boolean valid = true;
                 	if (host == null || host.trim().length() < 6) {
-                        JOptionPane.showMessageDialog(null, "Please set host in config.ini\n\nFor example: https://shinobi.com:8080/", "Error", JOptionPane.ERROR_MESSAGE);
                         valid = false;
                 	} 
                 	
-                	if (api == null || api.trim().length() < 10) {
-                	    JOptionPane.showMessageDialog(null, "Please set api key in config.ini\n\nGenerate one by opening Shinobi, clicking your username in the top left and selected API from the menu. Set Allowed IPs to 0.0.0.0 and then press Add to generate a new API key.", "Error", JOptionPane.ERROR_MESSAGE);	
+                	if (apiKey == null || apiKey.trim().length() < 10) {
                 	    valid = false;
                 	} 
                 	
                 	if (groupKey == null || groupKey.trim().length() < 1) {
-                	    JOptionPane.showMessageDialog(null, "Please set group key in config.ini. This can be found by opening Shinobi, selecting your email address in the top left and opening Settings from the menu.", "Error", JOptionPane.ERROR_MESSAGE);	
                 	    valid = false;
                 	} 
                 	
                 	if (!valid) {
                 		System.out.println("Ini not configured, exiting");
-                		System.exit(0);
+                		ConfigUI cfg = new ConfigUI(host,apiKey,groupKey);
+                		cfg.setVisible(true);
+                		                		
                 	} else {
                 		System.out.println("Everything looks ok, continuing");
                 	}
+                	
                 	
                 	// start creating UI
                 	// check API is valid
-                	PlayerUI ui = new PlayerUI();
-                    ui.api = new ShinobiAPI(api, host, groupKey);
-                   
-                    if (!ui.api.checkAPIValidAndGetMonitors()) {
-                    	JOptionPane.showMessageDialog(null, "API Key is invalid.", "Error", JOptionPane.ERROR_MESSAGE);	
-                	    valid = false;
+                	PlayerUI ui = null;
+                    boolean apiValid =false;
+                    while (!apiValid) {
+                    	ui = new PlayerUI();
+                        ui.api = new ShinobiAPI(apiKey, host, groupKey);
+	                    if (!ui.api.checkAPIValidAndGetMonitors()) {
+	                    	JOptionPane.showMessageDialog(null, "API Key is invalid.", "Error", JOptionPane.ERROR_MESSAGE);	
+	                    	ConfigUI cfg = new ConfigUI(host,apiKey,groupKey);
+	                		cfg.setVisible(true);
+	                    } else {
+	                    	apiValid = true;
+	                    }
                     }
-
-                	if (!valid) {
-                		System.out.println("Ini not configured, exiting");
-                		System.exit(0);
-                	} else {
-                		System.out.println("Everything looks ok, continuing");
-                	}
-                	
                 	ui.initShinobi();
                     ui.setVisible(true);
             	} catch (Exception e) {
@@ -516,6 +537,7 @@ public class PlayerUI extends javax.swing.JFrame {
     	if (mode == PlayMode.Live) {
     		btnLive.setEnabled(false);
     		btnPlayback.setEnabled(true);
+    		btnAm.setEnabled(false);
             cboDate.setEnabled(false);
             jSlider1.setEnabled(false);
             jPanel2.setVisible(false);
@@ -526,6 +548,7 @@ public class PlayerUI extends javax.swing.JFrame {
     		cboDate.setEnabled(true);
     		jSlider1.setEnabled(true);
             jPanel2.setVisible(true);
+            btnAm.setEnabled(true);
     		api.getVideoData(Calendar.getInstance().getTime());
     		jPanel3.removeVideoStreams();
     		
@@ -534,7 +557,7 @@ public class PlayerUI extends javax.swing.JFrame {
     }
 
     private javax.swing.JButton btnLive;
-    private javax.swing.JButton btnPlayback;
+    private javax.swing.JButton btnPlayback, btnAm;
     private javax.swing.JLabel jLabel1,lblTime;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
