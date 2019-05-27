@@ -1,7 +1,4 @@
-import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
@@ -9,19 +6,19 @@ import java.awt.event.MouseListener;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
 
 public class VideoFrame extends JInternalFrame {
 
 	public String windowId;
 	public VideoFrameCanvas videoCanvas;
-	public JPanel transparentPanel;
 	public ShinobiMonitor monitor;
 	//private VideoPlayerStream player;
-	private VideoPlaybackController controller;
 	private MPVManager mpv;
 	
 	public VideoFrame(ShinobiMonitor monitor) {
@@ -33,48 +30,20 @@ public class VideoFrame extends JInternalFrame {
         getRootPane().setWindowDecorationStyle(JRootPane.NONE);
         ((BasicInternalFrameUI) getUI()).setNorthPane(null);
         setBorder(null);
-        setResizable(true);    
         setBounds(0,0,640,320);
-
+        
         getRootPane().setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.BLACK));
-        		
+
 		// create canvas
         videoCanvas = new VideoFrameCanvas();
 		videoCanvas.setSize(getWidth(),getHeight());	
 		videoCanvas.setIgnoreRepaint(false);
-		transparentPanel = new JPanel();
-		transparentPanel.setSize(getWidth(),getHeight());
-		transparentPanel.setBackground(new Color(0,0,0,0));
-		transparentPanel.setOpaque(false);
-		transparentPanel.addMouseListener(new MouseListener() {
-			
-			@Override
-			public void mouseReleased(MouseEvent e) {			}
-			
-			@Override
-			public void mousePressed(MouseEvent e) {			}
-			
-			@Override
-			public void mouseExited(MouseEvent e) {			}
-			
-			@Override
-			public void mouseEntered(MouseEvent e) {			}
-			
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-		        	e.consume();
-				
-		        	System.out.println("Double click detected!");
-				}
-			}
-		});
+
 		add(videoCanvas);
-		add(transparentPanel);
 		
         setVisible(true);
         
-        addComponentListener(new ComponentListener() {
+		addComponentListener(new ComponentListener() {
 			
 			@Override
 			public void componentShown(ComponentEvent e) {
@@ -101,16 +70,13 @@ public class VideoFrame extends JInternalFrame {
 	}
 	
 	public void reSize(int width, int height) {
-
-		transparentPanel.setSize(width,height);	
-		videoCanvas.setSize(width,height);	
-		
+		videoCanvas.setSize(width,height);			
 	}
 	
 	public void playStream() {
 		if (mpv == null) {
 			if (windowId != null && monitor != null && monitor.stream != null) {
-				mpv = new MPVManager("mpv --no-cache --volume 0 --keep-open --profile=low-latency -wid "+windowId+" "+monitor.stream);
+				mpv = new MPVManager("mpv --input-ipc-server=/tmp/cctv_"+windowId+" --profile=low-latency --speed=1.01 --cache-secs=10  --volume 0 -wid "+windowId+" "+monitor.stream);
 				mpv.Start();
 			} else {
 				System.out.println("Null found on WindowId="+windowId+", monitor.stream="+monitor.stream);
@@ -127,13 +93,7 @@ public class VideoFrame extends JInternalFrame {
 			mpv.kill();
 		}
 	}
-	
-	public void PlayerCleanup() {
-		if (controller != null) {
-			controller.cleanup();
-		}
-	}
-
+		
 	public void playVideoPlayback(Date time, boolean removeable) {
 		if (mpv == null) {
 			if (windowId != null && monitor != null) {
@@ -196,11 +156,5 @@ public class VideoFrame extends JInternalFrame {
 		}		
 	}
 	
-	
-	private void writeNoVideoOnCanvas(VideoFrameCanvas c) {
-		System.out.println("no video");
-		c._status = c._status.NoPlaybackVideo;
-		c.repaint();
-	}
 	
 }

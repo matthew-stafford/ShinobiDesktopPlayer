@@ -69,6 +69,8 @@ public class VideoLayout extends JPanel {
 					int x = element_size.width*calculateColumnPositionInGridLayout(component, grid_size.width, grid_size.height);
 					int y = element_size.height*calculateRowPositionInGridLayout(component, grid_size.width, grid_size.height);
 
+					System.out.println("component="+component+", x="+x+", y="+y+", w="+element_size.width+", h="+element_size.height+" rows="+grid_size.width+", cols="+grid_size.height);
+					
 					f.setBounds( x, y , element_size.width, element_size.height);
 					component++;
 				}
@@ -121,9 +123,33 @@ public class VideoLayout extends JPanel {
 		for (Component c : getComponents()) {
 			if (c instanceof VideoFrame) {
 				VideoFrame f = (VideoFrame) c;
-				f.PlayerCleanup();
+				f.stopStream();
 				remove(c);
 			}
+		}
+	}
+	
+	private boolean isFullScreen = false;
+	public void fullScreen(ShinobiMonitor monitor) {
+		if (getMonitorComponent(monitor) == null) {
+			return ;
+		}
+		
+		if (!isFullScreen) {
+			for (Component c : getComponents()) {
+				if (c instanceof VideoFrame) {
+					VideoFrame f = (VideoFrame) c;
+					if (f.monitor.mid.equalsIgnoreCase(monitor.mid)) {
+						f.setBounds(0, 0, getWidth(), getHeight());
+						isFullScreen = true;
+					} else {
+						f.setSize(0,0);
+					}
+				}
+			}
+		} else {
+			updateLayout();
+			isFullScreen = false;
 		}
 	}
 
@@ -185,15 +211,23 @@ public class VideoLayout extends JPanel {
 
     
     private int calculateRowPositionInGridLayout(int componentNumber, int rows, int columns) {
+    	if (componentNumber == 1 && rows == 2 && columns == 1) {
+    		return 1;
+    	}
     	return (componentNumber / columns);
     }
     private int calculateColumnPositionInGridLayout(int componentNumber, int rows, int columns) {
+    	if (componentNumber == 1 && rows == 2 && columns == 1) {
+    		return 0;
+    	}
     	return (componentNumber % rows);
     }
     
     private static Dimension calculateGridLayoutRowsAndColumns(int numberOfComponents) {
     	if (numberOfComponents <= 1) {
     		return new Dimension(1,1);
+    	} else if (numberOfComponents <= 2) {
+    		return new Dimension(2,1);
     	} else if (numberOfComponents <= 4) {
     		return new Dimension(2,2);
     	} else if (numberOfComponents <= 9) {
@@ -212,6 +246,8 @@ public class VideoLayout extends JPanel {
     	Dimension size = getSize();
     	if (numberOfComponents <= 1) {
     		return size;
+    	} else if (numberOfComponents <= 2) {
+    		return new Dimension(size.width, size.height/2);
     	} else if (numberOfComponents <= 4) {
     		return new Dimension(size.width/2, size.height/2);
     	} else if (numberOfComponents <= 9) {
@@ -248,6 +284,18 @@ public class VideoLayout extends JPanel {
 	         e.printStackTrace();
         }
 		return ids;
+	}
+
+	public void removeVideoStream(ShinobiMonitor monitor) {
+		VideoFrame c = (VideoFrame) getMonitorComponent(monitor);
+		c.stopStream();
+		remove(c);
+	}
+
+	public void removeVideoPlayback(ShinobiMonitor monitor) {
+		VideoFrame c = (VideoFrame) getMonitorComponent(monitor);
+		c.stopStream();
+		remove(c);		
 	}
 
 

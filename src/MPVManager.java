@@ -72,27 +72,27 @@ public class MPVManager implements Runnable {
                 	
                 }
                 if (process.isAlive()) {
-                	process.destroy();
+                	process.destroyForcibly();
                 }
         } catch (Exception e) {
         	e.printStackTrace();
         } finally {        	
         	if (process != null && process.isAlive()) {
-        		process.destroy();
+        		process.destroyForcibly();
         	}
         }
 	}
 	
 	public void kill() {
 		if (process != null && process.isAlive()) {
-			process.destroy();
+			process.destroyForcibly();
 		}
 	}
 	
 	public void KillAll() {
 		for (Process p : processes) {
 			if (p.isAlive()) {
-				p.destroy();
+				p.destroyForcibly();
 			}
 		}
 	}

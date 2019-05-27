@@ -4,7 +4,7 @@ Shinobi CCTV player for linux desktops. Allows playback of live streams and reco
 <h2>System Requirements</h2>
 must have the following installed:
 
-socat, xwininfo & mpv
+socat (used for IPC pipe between application and mpv), xwininfo (used to get windowID of java canvas) & mpv (for playback of the video files)
 
 sudo apt install socat 
 sudo apt install xwininfo

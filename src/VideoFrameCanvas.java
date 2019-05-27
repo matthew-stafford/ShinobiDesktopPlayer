@@ -32,6 +32,8 @@ public class VideoFrameCanvas extends Canvas {
          } else if (_status == status.NoPlaybackVideo) {
         	 drawCenteredString(g2, "NO PLAYBACK VIDEO FILE FOUND",new Rectangle(0,0, getWidth(),getHeight()), myFont);        	 
          }
+         
+         
      }
 	
 	/**

@@ -6,16 +6,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,21 +25,19 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.ListSelectionModel;
-import javax.swing.LookAndFeel;
-import javax.swing.SwingConstants;
+import javax.swing.SpinnerDateModel;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.DateFormatter;
 
-import org.ini4j.Wini;
 
 
 /**
@@ -63,7 +55,6 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static String apiKey;
 	public static String groupKey;
 	public static String WINDOW_TITLE;
-	private TimePeriod playbackTimePeriod = TimePeriod.AM;
 
     public PlayerUI() {
     	
@@ -126,41 +117,18 @@ public class PlayerUI extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jPanel2.setVisible(false);
-        jSlider1 = new javax.swing.JSlider();
-        jSlider1.setToolTipText("");
-        jSlider1.addChangeListener(new ChangeListener() {
-        	@Override
-			public void stateChanged(ChangeEvent e) {
-        		if (lblTime != null) {
-	        		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss dd MMM yyyy");
-	        		lblTime.setText(sdf.format(getTimeFromSlider()));
-        		}
-        	}
-        });
-        jSlider1.addMouseListener(new MouseAdapter() {
-        	@Override
-        	public void mouseReleased(MouseEvent e) {
-        		System.out.println(getTimeFromSlider());
-        		for (Component c : jPanel3.getComponents()) {
-        			if (c instanceof VideoFrame) {
-        				((VideoFrame) c).playVideoPlayback(getTimeFromSlider(), false);
-        			}
-        		}
-        	}
-        });
-        jSlider1.setEnabled(false);
-        jSlider1.setPaintTicks(true);
-        jSlider1.setPaintLabels(true);
+        
+        
         jPanel3 = new VideoLayout();
         jPanel3.setOpaque(false);
         jPanel3.setBackground(new Color(0,0,0,0));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
        
-        Random r = new Random();
-        
-        PlayerUI.WINDOW_TITLE = "Shinobi Desktop Player "+r.nextInt(1000000);
-        
+        // generate random title so xwininfo can identify which window to get
+        // allows for multiple clients 
+        Random r = new Random();        
+        PlayerUI.WINDOW_TITLE = "Shinobi Desktop Player "+r.nextInt(1000000);        
         setTitle(WINDOW_TITLE);
 
         jPanel1.setBackground(UIManager.getColor("Button.background"));
@@ -169,13 +137,32 @@ public class PlayerUI extends javax.swing.JFrame {
 
         jLabel3.setText("Sources");
         
-        JLabel lblMonitorGroups = new JLabel("Monitor Groups");
-        
-        JComboBox comboBox = new JComboBox();
-        
         JButton btnSettings = new JButton("");
         btnSettings.setEnabled(true);
         btnSettings.setIcon(new ImageIcon(classLoader.getResource("assets/settings.png")));
+        
+        spinner = new JSpinner(new SpinnerDateModel() );
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spinner, "HH:mm:ss");
+        DateFormatter formatter = (DateFormatter)timeEditor.getTextField().getFormatter();
+        formatter.setAllowsInvalid(false);
+        formatter.setOverwriteMode(true);
+        spinner.setEditor(timeEditor);
+        spinner.setValue(new Date());
+        
+        cboDate = new JComboBox<String>();
+        cboDate.setEnabled(false);
+        
+        JButton btnSeek = new JButton("Play");
+        btnSeek.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		System.out.println(getDateFromSpinnerAndComboBox());
+        		for (Component c : jPanel3.getComponents()) {
+        			if (c instanceof VideoFrame) {
+        				((VideoFrame) c).playVideoPlayback(getDateFromSpinnerAndComboBox(), false);
+        			}
+        		}
+        	}
+        });
         
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1Layout.setHorizontalGroup(
@@ -183,18 +170,24 @@ public class PlayerUI extends javax.swing.JFrame {
         		.addGroup(jPanel1Layout.createSequentialGroup()
         			.addContainerGap()
         			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
-        				.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
+        				.addGroup(jPanel1Layout.createSequentialGroup()
+        					.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
+        					.addContainerGap())
         				.addComponent(jLabel1, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
         				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-        					.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
-        						.addGroup(jPanel1Layout.createSequentialGroup()
-        							.addComponent(btnLive, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
-        							.addPreferredGap(ComponentPlacement.RELATED)
-        							.addComponent(btnPlayback, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
-        							.addGap(72)
-        							.addComponent(btnSettings, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE))
-        						.addComponent(lblMonitorGroups, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-        						.addComponent(comboBox, 0, 246, Short.MAX_VALUE))
+        					.addComponent(btnLive, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
+        					.addPreferredGap(ComponentPlacement.RELATED)
+        					.addComponent(btnPlayback, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
+        					.addGap(72)
+        					.addComponent(btnSettings, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
+        					.addContainerGap())
+        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        					.addComponent(spinner, GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
+        					.addPreferredGap(ComponentPlacement.RELATED)
+        					.addComponent(btnSeek)
+        					.addContainerGap())
+        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        					.addComponent(cboDate, 0, 246, Short.MAX_VALUE)
         					.addContainerGap())
         				.addGroup(jPanel1Layout.createSequentialGroup()
         					.addComponent(jLabel3, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
@@ -214,13 +207,15 @@ public class PlayerUI extends javax.swing.JFrame {
         					.addPreferredGap(ComponentPlacement.RELATED)
         					.addComponent(btnSettings)))
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(lblMonitorGroups)
-        			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(comboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(jLabel3, GroupLayout.PREFERRED_SIZE, 15, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 754, Short.MAX_VALUE)
+        			.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(cboDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.UNRELATED)
+        			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
+        				.addComponent(btnSeek)
+        				.addComponent(spinner, GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE))
         			.addContainerGap())
         );
         
@@ -261,117 +256,98 @@ public class PlayerUI extends javax.swing.JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				JTable table =(JTable) e.getSource();
-				int index = 0;
 				if (e.getClickCount() == 2 && table.getSelectedRow() != -1) {
-					
-					if (PLAY_MODE  == PlayMode.Live) {
-						for (ShinobiMonitor monitor : api.getMonitors().values()) {
-							if (monitor.stream != null && monitor.stream.length() > 0) {
-								if (index == table.getSelectedRow()) {
-									jPanel3.addVideoStream(monitor);
-									break;
-								}
-								index++;
-							}
-						}			
-					} else if (PLAY_MODE == PlayMode.Playback) {
-						for (ShinobiMonitor monitor : api.getMonitors().values()) {
-							if (monitor.recording == true) {
-								if (index == table.getSelectedRow()) {
-									jPanel3.addVideoPlayback(monitor, getTimeFromSlider());
-									break;
-								}
-								index++;
-							}
-						}	
-					}
+					addSelectedVideoToLayout();
 		        }				
 			}
 		});
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);        
         table.setFillsViewportHeight(true);
         jScrollPane1.setViewportView(table);
+        
+        popupMenu = new JPopupMenu();
+        addPopup(table, popupMenu);
+        
+        mntmAdd = new JMenuItem("Add");
+        mntmAdd.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		if (table.getSelectedRow() != -1) {
+        			addSelectedVideoToLayout();
+        		}
+        	}
+        });
+        popupMenu.add(mntmAdd);
+        
+        mntmRemove = new JMenuItem("Remove");
+        popupMenu.add(mntmRemove);
+        
+        menuItem = new JMenuItem("");
+        menuItem.setEnabled(false);
+        popupMenu.add(menuItem);
+        
+        mntmFullscreen = new JMenuItem("Fullscreen");
+        mntmFullscreen.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		if (table.getSelectedRow() != -1) {
+        			toggleFullScreenForSelectedMonitor();
+        		}
+        	}
+        });
+        popupMenu.add(mntmFullscreen);
         jPanel1.setLayout(jPanel1Layout);
-
-        jSlider1.setMaximum(43200);
-        jSlider1.setMinimum(10);
-       
+    
         
         SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy");
         Calendar dates = Calendar.getInstance();
-        cboDate = new JComboBox<String>();
-        cboDate.setEnabled(false);
         for (int i = 0 ; i < 100; i++) {
         	cboDate.addItem(sdf.format(dates.getTime()));
         	dates.add(Calendar.DATE, -1);
         }
         
-        DateFormat dateFormat = new SimpleDateFormat("a");
-        Calendar cal = Calendar.getInstance();
-        System.out.println(dateFormat.format(cal.getTime()));
         
-        btnAm = new JButton("PM");
-        btnAm.setEnabled(false);
-        if (dateFormat.format(cal.getTime()).equalsIgnoreCase("pm")) {
-			playbackTimePeriod = TimePeriod.PM;
-			btnAm.setText("AM");
-        } else {
-        	playbackTimePeriod = TimePeriod.AM;
-			btnAm.setText("PM");
-        }
-        
-        int hours = Integer.parseInt(new SimpleDateFormat("hh").format(cal.getTime())) * 60 * 60;
-        int minutes = Integer.parseInt(new SimpleDateFormat("mm").format(cal.getTime())) * 60;
-        jSlider1.setValue(hours+minutes);
-        
-        btnAm.addActionListener(new ActionListener() {
-        	@Override
-			public void actionPerformed(ActionEvent arg0) {
-        		if (playbackTimePeriod == TimePeriod.PM) {
-        			btnAm.setText("PM");
-        			playbackTimePeriod = TimePeriod.AM;
-        		} else if (playbackTimePeriod == TimePeriod.AM) {
-        			btnAm.setText("AM");
-        			playbackTimePeriod = TimePeriod.PM;
-        		}
+        btnPause = new JButton("Pause");
+        btnPause.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		
         	}
         });
         
-        lblTime = new JLabel("21:46:01 19 May 2019");
-        lblTime.setHorizontalAlignment(SwingConstants.CENTER);
-        SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm:ss dd MMM yyyy");
-		lblTime.setText(sdf2.format(getTimeFromSlider()));
+        btnEvents = new JButton("Events");
+        
+        btnNow = new JButton("Now");
+        
+        btnMute = new JButton("Mute");
+        
+        btnSpeed = new JButton("Speed");
 		
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2Layout.setHorizontalGroup(
+        	jPanel2Layout.createParallelGroup(Alignment.LEADING)
+        		.addGroup(jPanel2Layout.createSequentialGroup()
+        			.addComponent(btnPause)
+        			.addPreferredGap(ComponentPlacement.UNRELATED)
+        			.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.UNRELATED)
+        			.addComponent(btnMute, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.UNRELATED)
+        			.addComponent(btnSpeed, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.UNRELATED)
+        			.addComponent(btnEvents, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
+        			.addContainerGap(566, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
         	jPanel2Layout.createParallelGroup(Alignment.TRAILING)
         		.addGroup(jPanel2Layout.createSequentialGroup()
         			.addContainerGap()
         			.addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
-        				.addGroup(jPanel2Layout.createSequentialGroup()
-        					.addComponent(cboDate, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
-        					.addPreferredGap(ComponentPlacement.RELATED)
-        					.addComponent(btnAm)
-        					.addPreferredGap(ComponentPlacement.RELATED)
-        					.addComponent(jSlider1, GroupLayout.DEFAULT_SIZE, 972, Short.MAX_VALUE)
-        					.addGap(10))
+        				.addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
+        					.addComponent(btnPause, GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
+        					.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE)
+        					.addComponent(btnMute, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE)
+        					.addComponent(btnSpeed, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE))
         				.addGroup(Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-        					.addComponent(lblTime, GroupLayout.PREFERRED_SIZE, 871, GroupLayout.PREFERRED_SIZE)
-        					.addGap(99))))
-        );
-        jPanel2Layout.setVerticalGroup(
-        	jPanel2Layout.createParallelGroup(Alignment.LEADING)
-        		.addGroup(jPanel2Layout.createSequentialGroup()
-        			.addComponent(lblTime)
-        			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addGroup(jPanel2Layout.createParallelGroup(Alignment.TRAILING)
-        				.addComponent(jSlider1, GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
-        				.addGroup(jPanel2Layout.createSequentialGroup()
-        					.addGap(8)
-        					.addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
-        						.addComponent(btnAm)
-        						.addComponent(cboDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))))
-        			.addContainerGap())
+        					.addComponent(btnEvents, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE)
+        					.addContainerGap())))
         );
         jPanel2.setLayout(jPanel2Layout);
 
@@ -381,72 +357,135 @@ public class PlayerUI extends javax.swing.JFrame {
         		.addGroup(layout.createSequentialGroup()
         			.addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, 267, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, 989, Short.MAX_VALUE))
-        		.addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, 1262, Short.MAX_VALUE)
+        			.addGroup(layout.createParallelGroup(Alignment.LEADING)
+        				.addGroup(layout.createSequentialGroup()
+        					.addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, 989, Short.MAX_VALUE)
+        					.addGap(12))
+        				.addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, 989, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
         	layout.createParallelGroup(Alignment.LEADING)
         		.addGroup(layout.createSequentialGroup()
-        			.addGroup(layout.createParallelGroup(Alignment.LEADING)
-        				.addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
-        				.addComponent(jPanel1, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE))
+        			.addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, 875, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        			.addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+        			.addContainerGap(35, Short.MAX_VALUE))
+        		.addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, 962, Short.MAX_VALUE)
         );
         
         jPanel3.setLayout(null);
         
         btnSettings.setVisible(false);
-        
+
+		setDefaultLookAndFeelDecorated(true);
         
         getContentPane().setLayout(layout);
         pack();
         
-        
-        
         ToolTipManager.sharedInstance().setInitialDelay(0);
     }
 
+    protected void toggleFullScreenForSelectedMonitor() {
+    	int index = 0;
+    	if (PLAY_MODE  == PlayMode.Live) {
+			for (ShinobiMonitor monitor : api.getMonitors().values()) {
+				if (monitor.stream != null && monitor.stream.length() > 0) {
+					if (index == table.getSelectedRow()) {
+						jPanel3.fullScreen(monitor);
+						break;
+					}
+					index++;
+				}
+			}			
+		} else if (PLAY_MODE == PlayMode.Playback) {
+			for (ShinobiMonitor monitor : api.getMonitors().values()) {
+				if (monitor.recording == true) {
+					if (index == table.getSelectedRow()) {
+						jPanel3.fullScreen(monitor);
+						break;
+					}
+					index++;
+				}
+			}	
+		}
+	}
+
+	public void addSelectedVideoToLayout() {
+    	int index = 0;
+    	if (PLAY_MODE  == PlayMode.Live) {
+			for (ShinobiMonitor monitor : api.getMonitors().values()) {
+				if (monitor.stream != null && monitor.stream.length() > 0) {
+					if (index == table.getSelectedRow()) {
+						jPanel3.addVideoStream(monitor);
+						break;
+					}
+					index++;
+				}
+			}			
+		} else if (PLAY_MODE == PlayMode.Playback) {
+			for (ShinobiMonitor monitor : api.getMonitors().values()) {
+				if (monitor.recording == true) {
+					if (index == table.getSelectedRow()) {
+						jPanel3.addVideoPlayback(monitor, getDateFromSpinnerAndComboBox());
+						break;
+					}
+					index++;
+				}
+			}	
+		}
+    }
     
-    private Date getTimeFromSlider() {
+    public void removeSelectedVideoFromLayout() {
+    	int index = 0;
+    	if (PLAY_MODE  == PlayMode.Live) {
+			for (ShinobiMonitor monitor : api.getMonitors().values()) {
+				if (monitor.stream != null && monitor.stream.length() > 0) {
+					if (index == table.getSelectedRow()) {
+						jPanel3.removeVideoStream(monitor);
+						break;
+					}
+					index++;
+				}
+			}			
+		} else if (PLAY_MODE == PlayMode.Playback) {
+			for (ShinobiMonitor monitor : api.getMonitors().values()) {
+				if (monitor.recording == true) {
+					if (index == table.getSelectedRow()) {
+						jPanel3.removeVideoPlayback(monitor);
+						break;
+					}
+					index++;
+				}
+			}	
+		}
+    }
+    
+    
+    private Date getDateFromSpinnerAndComboBox() {
     	if (cboDate == null || cboDate.getSelectedItem() == null) {
     		return null;
     	}
-    	int value = jSlider1.getValue();
     	
-    	int hours = (value/3600);
-    	int minutes = (value%3600)/60;
-    	int seconds = ((value%3600)%60);
+    	Date date = (Date) spinner.getValue();
+    	
+    	int hours = date.getHours();
+    	int minutes = date.getMinutes();
+    	int seconds = date.getSeconds();
     	
     	String time = (hours < 10 ? "0"+hours : hours) + ":" + (minutes < 10 ? "0"+minutes : minutes) + ":" + (seconds < 10 ? "0"+seconds : seconds);
-    	
-    	if (playbackTimePeriod == TimePeriod.AM) {
-    		SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss");
-    		try {
-    			Calendar cal = Calendar.getInstance();
-    			cal.setTimeZone(TimeZone.getDefault());
-    			cal.setTime(sdf.parse(cboDate.getSelectedItem()+" "+time));
-				Date date = cal.getTime();
+	
+		SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss");
+		try {
+			Calendar cal = Calendar.getInstance();
+			cal.setTimeZone(TimeZone.getDefault());
+			cal.setTime(sdf.parse(cboDate.getSelectedItem()+" "+time));
+			Date date2 = cal.getTime();
 
-				return date;
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}    		
-    	} else if (playbackTimePeriod == TimePeriod.PM) {
-    		try {
-    			SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss");
-    			Calendar cal = Calendar.getInstance();    		
-    			cal.setTimeZone(Calendar.getInstance().getTimeZone());
-				cal.setTime(sdf.parse(cboDate.getSelectedItem()+" "+time));
-	    		cal.add(Calendar.HOUR, 12);
-	    		
-	    		return cal.getTime();
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    	}    	
+			return date2;
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}    		
+    	
     	return new Date();
     }
     
@@ -460,6 +499,11 @@ public class PlayerUI extends javax.swing.JFrame {
     
     public static void main(String args[]) {
         
+    	try {
+    		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
 			public void run() {
@@ -537,18 +581,12 @@ public class PlayerUI extends javax.swing.JFrame {
     	if (mode == PlayMode.Live) {
     		btnLive.setEnabled(false);
     		btnPlayback.setEnabled(true);
-    		btnAm.setEnabled(false);
             cboDate.setEnabled(false);
-            jSlider1.setEnabled(false);
-            jPanel2.setVisible(false);
             jPanel3.removeVideoPlayback();
     	} else if (mode == PlayMode.Playback) {
     		btnPlayback.setEnabled(false);
     		btnLive.setEnabled(true);
     		cboDate.setEnabled(true);
-    		jSlider1.setEnabled(true);
-            jPanel2.setVisible(true);
-            btnAm.setEnabled(true);
     		api.getVideoData(Calendar.getInstance().getTime());
     		jPanel3.removeVideoStreams();
     		
@@ -557,16 +595,26 @@ public class PlayerUI extends javax.swing.JFrame {
     }
 
     private javax.swing.JButton btnLive;
-    private javax.swing.JButton btnPlayback, btnAm;
-    private javax.swing.JLabel jLabel1,lblTime;
+    private javax.swing.JButton btnPlayback;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private JSpinner spinner;
     private JComboBox<String> cboDate;
     private VideoLayout jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSlider jSlider1;
     private JTable table;
+    private JButton btnPause;
+    private JButton btnEvents;
+    private JButton btnNow;
+    private JButton btnMute;
+    private JButton btnSpeed;
+    private JPopupMenu popupMenu;
+    private JMenuItem mntmAdd;
+    private JMenuItem mntmRemove;
+    private JMenuItem menuItem;
+    private JMenuItem mntmFullscreen;
 
 	private void addMonitorsToList(TreeMap<String, ShinobiMonitor> monitors) {
 		
@@ -611,9 +659,11 @@ public class PlayerUI extends javax.swing.JFrame {
 		table.setModel(new DefaultTableModel(
 	        	cellData,
 	        	new String[] {
-	        		"Name", "mid"
+	        		"Name", "Monitor ID"
 	        	}
 	        ));
+		table.getColumn("Name").setPreferredWidth(400);
+		table.getColumn("Monitor ID").setPreferredWidth(1);
 	}
 
 	
@@ -625,5 +675,22 @@ public class PlayerUI extends javax.swing.JFrame {
 	public enum PlayMode {
 		Live,
 		Playback
+	}
+	private static void addPopup(Component component, final JPopupMenu popup) {
+		component.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					showMenu(e);
+				}
+			}
+			public void mouseReleased(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					showMenu(e);
+				}
+			}
+			private void showMenu(MouseEvent e) {
+				popup.show(e.getComponent(), e.getX(), e.getY());
+			}
+		});
 	}
 }
