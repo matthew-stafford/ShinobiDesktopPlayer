@@ -190,6 +190,31 @@ public class VideoLayout extends JPanel {
 			}
 		}
 	}
+	
+	private boolean paused = false;
+	public void pauseAll() {
+		if (paused) {
+			// resume play on all
+			for (Component c: getComponents()) {
+				if (c instanceof VideoFrame) {
+					VideoFrame f = (VideoFrame) c;
+					f.resumeStream();
+				}
+			}		
+			
+			paused = false;
+		} else {
+			// pause all
+			for (Component c: getComponents()) {
+				if (c instanceof VideoFrame) {
+					VideoFrame f = (VideoFrame) c;
+					f.pauseStream();
+				}
+			}		
+			
+			paused = true;
+		}
+	}
 
 
 
@@ -296,6 +321,24 @@ public class VideoLayout extends JPanel {
 		VideoFrame c = (VideoFrame) getMonitorComponent(monitor);
 		c.stopStream();
 		remove(c);		
+	}
+
+	public void setVolume(int volume) {
+		for (Component c: getComponents()) {
+			if (c instanceof VideoFrame) {
+				VideoFrame f = (VideoFrame) c;
+				f.setVolume(volume);
+			}
+		}			
+	}
+	
+	public void setPlaybackSpeed(double speed) {
+		for (Component c: getComponents()) {
+			if (c instanceof VideoFrame) {
+				VideoFrame f = (VideoFrame) c;
+				f.setSpeed(speed);
+			}
+		}			
 	}
 
 

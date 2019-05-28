@@ -3,6 +3,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -30,6 +33,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
+import javax.swing.JToggleButton;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerDateModel;
@@ -37,6 +41,12 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DateFormatter;
+import javax.swing.text.NumberFormatter;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.SwingConstants;
 
 
 
@@ -55,10 +65,10 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static String apiKey;
 	public static String groupKey;
 	public static String WINDOW_TITLE;
+	private boolean audio = false;
+	private boolean speed = false;
 
     public PlayerUI() {
-    	
-    	ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     	
     	addWindowListener(new WindowListener() {
 			
@@ -76,7 +86,12 @@ public class PlayerUI extends javax.swing.JFrame {
 			
 			@Override
 			public void windowClosing(WindowEvent e) {
-				new MPVManager("").KillAll();			
+				for (Component c : jPanel3.getComponents()) {
+					if (c instanceof VideoFrame) {
+						VideoFrame f = (VideoFrame) c;
+						f.stopStream();
+					}
+				}
 			}
 			
 			@Override
@@ -97,7 +112,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnLive = new javax.swing.JButton();
         btnLive.setToolTipText("Live");
         btnLive.setEnabled(false);
-        btnLive.setIcon(new ImageIcon(getClass().getClassLoader().getResource("assets/live.png")));
+        btnLive.setIcon(new ImageIcon(getClass().getClassLoader().getResource("assets/icons8-private-wall-mount-camera-32.png")));
         btnLive.addActionListener(new ActionListener() {
         	@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -106,7 +121,7 @@ public class PlayerUI extends javax.swing.JFrame {
         });
         btnPlayback = new javax.swing.JButton();
         btnPlayback.setToolTipText("Playback");
-        btnPlayback.setIcon(new ImageIcon(classLoader.getResource("assets/playback.png")));
+        btnPlayback.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-video-playlist-32.png")));
         btnPlayback.addActionListener(new ActionListener() {
         	@Override
 			public void actionPerformed(ActionEvent e) {        		
@@ -116,7 +131,6 @@ public class PlayerUI extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jPanel2.setVisible(false);
         
         
         jPanel3 = new VideoLayout();
@@ -139,20 +153,23 @@ public class PlayerUI extends javax.swing.JFrame {
         
         JButton btnSettings = new JButton("");
         btnSettings.setEnabled(true);
-        btnSettings.setIcon(new ImageIcon(classLoader.getResource("assets/settings.png")));
+        btnSettings.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/settings.png")));
         
-        spinner = new JSpinner(new SpinnerDateModel() );
-        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spinner, "HH:mm:ss");
+        spinnerPlaybackTime = new JSpinner(new SpinnerDateModel() );
+        spinnerPlaybackTime.setEnabled(false);
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(spinnerPlaybackTime, "HH:mm:ss");
         DateFormatter formatter = (DateFormatter)timeEditor.getTextField().getFormatter();
         formatter.setAllowsInvalid(false);
         formatter.setOverwriteMode(true);
-        spinner.setEditor(timeEditor);
-        spinner.setValue(new Date());
+        spinnerPlaybackTime.setEditor(timeEditor);
+        spinnerPlaybackTime.setValue(new Date());
         
         cboDate = new JComboBox<String>();
         cboDate.setEnabled(false);
         
-        JButton btnSeek = new JButton("Play");
+        btnSeek = new JButton("");
+        btnSeek.setEnabled(false);
+        btnSeek.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-play-32.png")));
         btnSeek.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
         		System.out.println(getDateFromSpinnerAndComboBox());
@@ -171,10 +188,11 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addContainerGap()
         			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
         				.addGroup(jPanel1Layout.createSequentialGroup()
-        					.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
+        					.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
         					.addContainerGap())
-        				.addComponent(jLabel1, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
-        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        				.addComponent(jLabel1, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
+        				.addGroup(jPanel1Layout.createSequentialGroup()
+        					.addGap(3)
         					.addComponent(btnLive, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
         					.addPreferredGap(ComponentPlacement.RELATED)
         					.addComponent(btnPlayback, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
@@ -182,15 +200,15 @@ public class PlayerUI extends javax.swing.JFrame {
         					.addComponent(btnSettings, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
         					.addContainerGap())
         				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-        					.addComponent(spinner, GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE)
+        					.addComponent(spinnerPlaybackTime, GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
         					.addPreferredGap(ComponentPlacement.RELATED)
         					.addComponent(btnSeek)
         					.addContainerGap())
-        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-        					.addComponent(cboDate, 0, 246, Short.MAX_VALUE)
+        				.addGroup(jPanel1Layout.createSequentialGroup()
+        					.addComponent(cboDate, 0, 249, Short.MAX_VALUE)
         					.addContainerGap())
         				.addGroup(jPanel1Layout.createSequentialGroup()
-        					.addComponent(jLabel3, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
+        					.addComponent(jLabel3, GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
         					.addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
@@ -205,17 +223,17 @@ public class PlayerUI extends javax.swing.JFrame {
         				.addGroup(jPanel1Layout.createSequentialGroup()
         					.addComponent(jLabel1)
         					.addPreferredGap(ComponentPlacement.RELATED)
-        					.addComponent(btnSettings)))
+        					.addComponent(btnSettings, GroupLayout.PREFERRED_SIZE, 42, GroupLayout.PREFERRED_SIZE)))
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(jLabel3, GroupLayout.PREFERRED_SIZE, 15, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
+        			.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 784, Short.MAX_VALUE)
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(cboDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.UNRELATED)
-        			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
-        				.addComponent(btnSeek)
-        				.addComponent(spinner, GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE))
+        			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING, false)
+        				.addComponent(spinnerPlaybackTime)
+        				.addComponent(btnSeek, GroupLayout.PREFERRED_SIZE, 40, Short.MAX_VALUE))
         			.addContainerGap())
         );
         
@@ -305,49 +323,201 @@ public class PlayerUI extends javax.swing.JFrame {
         }
         
         
-        btnPause = new JButton("Pause");
+        btnPause = new JToggleButton("");
+        btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-play-32.png")));
         btnPause.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
         		
         	}
         });
         
-        btnEvents = new JButton("Events");
+        btnEvents = new JButton("");
+        btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
         
-        btnNow = new JButton("Now");
+        btnNow = new JButton("");
+        btnNow.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-end-32.png")));
         
-        btnMute = new JButton("Mute");
+        btnVolume = new JButton("");
+        btnVolume.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		if (audio == false) {
+        			audio = true;
+        			
+        			// update button
+        			updateVolumeButton();
+        			jPanel3.setVolume((Integer) spinnerVolume.getValue());
+        			
+        		} else if (audio == true) {
+        			audio = false;     
+        			
+        			// update button
+        			updateVolumeButton();        			
+        			jPanel3.setVolume(0);
+        		}
+        	}
+        });
+        btnVolume.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-audio-32.png")));
         
-        btnSpeed = new JButton("Speed");
+        btnSpeed = new JToggleButton("");
+        btnSpeed.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-speed-32.png")));
+        btnSpeed.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				
+				if (speed == true) {
+					speed = false;
+					// reset speed to 1x
+					jPanel3.setPlaybackSpeed(1.01);
+				} else {
+					speed = true;
+					// change speed to user value
+					jPanel3.setPlaybackSpeed((Double) spinnerPlaybackSpeed.getValue());
+				}
+				
+			}
+		});
+        
+        spinnerPlaybackSpeed = new JSpinner();
+        spinnerPlaybackSpeed.addChangeListener(new ChangeListener() {
+        	public void stateChanged(ChangeEvent arg0) {
+        		if (speed == true) {
+            		jPanel3.setPlaybackSpeed((Double) spinnerPlaybackSpeed.getValue());
+				}
+        	}
+        });
+        spinnerPlaybackSpeed.setModel(new SpinnerNumberModel(1.00,0.01,100.00,1.00));
+        JSpinner.NumberEditor ne1 = new JSpinner.NumberEditor(spinnerPlaybackSpeed);
+		NumberFormatter nf1 = (NumberFormatter) ne1.getTextField().getFormatter();
+		final JTextField jtf1 = ((JSpinner.DefaultEditor) spinnerPlaybackSpeed.getEditor()).getTextField();
+		jtf1.addKeyListener(new KeyAdapter() {
+		    @Override
+		    public void keyReleased(KeyEvent e) {
+		        String text = jtf1.getText().replace(",", "");
+		        int oldCaretPos = jtf1.getCaretPosition();
+		        try {
+		            Double newValue = Double.valueOf(text);
+		            
+		            if (newValue <= 100.00 && newValue >= 0.01) {
+		            	if (speed == true) {
+		            		jPanel3.setPlaybackSpeed((Double)newValue);
+						}
+		            }
+		            jtf1.setCaretPosition(oldCaretPos);
+		        } catch(NumberFormatException ex) {
+		            //Not a number in text field -> do nothing
+		        }
+		    }
+		});
+		
+		nf1.setAllowsInvalid(false);
+		nf1.setOverwriteMode(true);
+		nf1.setCommitsOnValidEdit(true);
+		
+        JButton btnReplay30 = new JButton("");
+        btnReplay30.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-30-32.png")));
+        
+        btnReplay10 = new JButton("");
+        btnReplay10.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-10-32.png")));
+        
+        btnReplay5 = new JButton("");
+        btnReplay5.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-5-32.png")));
+        
+        btnForward5 = new JButton("");
+        btnForward5.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-5-32.png")));
+        
+        btnForward10 = new JButton("");
+        btnForward10.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-10-32.png")));
+        
+        btnForward30 = new JButton("");
+        btnForward30.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-30-32.png")));
+        
+        spinnerVolume = new JSpinner();
+		spinnerVolume.setModel(new SpinnerNumberModel(100,0,1000,1));
+
+		JSpinner.NumberEditor ne = new JSpinner.NumberEditor(spinnerVolume);
+		NumberFormatter nf = (NumberFormatter) ne.getTextField().getFormatter();
+		final JTextField jtf = ((JSpinner.DefaultEditor) spinnerVolume.getEditor()).getTextField();
+		jtf.addKeyListener(new KeyAdapter() {
+		    @Override
+		    public void keyReleased(KeyEvent e) {
+		        String text = jtf.getText().replace(",", "");
+		        int oldCaretPos = jtf.getCaretPosition();
+		        try {
+		            Integer newValue = Integer.valueOf(text);
+		            
+		            if (newValue <= 1000 && newValue >= 0) {
+		            	audio = true;
+						updateVolumeButton();
+						jPanel3.setVolume((Integer)newValue);
+		            }
+		            jtf.setCaretPosition(oldCaretPos);
+		        } catch(NumberFormatException ex) {
+		            //Not a number in text field -> do nothing
+		        }
+		    }
+		});
+		
+		nf.setAllowsInvalid(false);
+		nf.setOverwriteMode(true);
+		nf.setCommitsOnValidEdit(true);
+		
+		spinnerVolume.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				audio = true;
+				updateVolumeButton();
+				jPanel3.setVolume((Integer)spinnerVolume.getValue());
+			}
+		});
 		
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2Layout.setHorizontalGroup(
-        	jPanel2Layout.createParallelGroup(Alignment.LEADING)
-        		.addGroup(jPanel2Layout.createSequentialGroup()
-        			.addComponent(btnPause)
-        			.addPreferredGap(ComponentPlacement.UNRELATED)
-        			.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-        			.addPreferredGap(ComponentPlacement.UNRELATED)
-        			.addComponent(btnMute, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-        			.addPreferredGap(ComponentPlacement.UNRELATED)
-        			.addComponent(btnSpeed, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-        			.addPreferredGap(ComponentPlacement.UNRELATED)
-        			.addComponent(btnEvents, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)
-        			.addContainerGap(566, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
         	jPanel2Layout.createParallelGroup(Alignment.TRAILING)
         		.addGroup(jPanel2Layout.createSequentialGroup()
-        			.addContainerGap()
+        			.addComponent(btnReplay30, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnReplay10, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnReplay5, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnPause, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnSpeed, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addComponent(spinnerPlaybackSpeed, GroupLayout.PREFERRED_SIZE, 69, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnForward5, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnForward10, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnForward30, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addGap(180)
+        			.addComponent(btnVolume, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 69, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(btnEvents, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE))
+        );
+        jPanel2Layout.setVerticalGroup(
+        	jPanel2Layout.createParallelGroup(Alignment.LEADING)
+        		.addGroup(jPanel2Layout.createSequentialGroup()
         			.addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
-        				.addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
-        					.addComponent(btnPause, GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
-        					.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE)
-        					.addComponent(btnMute, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE)
-        					.addComponent(btnSpeed, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE))
-        				.addGroup(Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-        					.addComponent(btnEvents, GroupLayout.PREFERRED_SIZE, 34, GroupLayout.PREFERRED_SIZE)
-        					.addContainerGap())))
+        				.addComponent(btnReplay30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnReplay10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnReplay5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnPause, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnForward5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnForward10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnForward30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(spinnerPlaybackSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnEvents, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(btnVolume, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        				.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE))
+        			.addContainerGap())
         );
         jPanel2.setLayout(jPanel2Layout);
 
@@ -358,24 +528,24 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, 267, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addGroup(layout.createParallelGroup(Alignment.LEADING)
-        				.addGroup(layout.createSequentialGroup()
-        					.addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, 989, Short.MAX_VALUE)
-        					.addGap(12))
-        				.addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, 989, Short.MAX_VALUE)))
+        				.addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, 1007, Short.MAX_VALUE)
+        				.addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
-        	layout.createParallelGroup(Alignment.LEADING)
+        	layout.createParallelGroup(Alignment.TRAILING)
         		.addGroup(layout.createSequentialGroup()
-        			.addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, 875, GroupLayout.PREFERRED_SIZE)
-        			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-        			.addContainerGap(35, Short.MAX_VALUE))
-        		.addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, 962, Short.MAX_VALUE)
+        			.addGroup(layout.createParallelGroup(Alignment.TRAILING)
+        				.addComponent(jPanel1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 956, Short.MAX_VALUE)
+        				.addGroup(layout.createSequentialGroup()
+        					.addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, 904, Short.MAX_VALUE)
+        					.addPreferredGap(ComponentPlacement.RELATED)
+        					.addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)))
+        			.addGap(6))
         );
         
         jPanel3.setLayout(null);
         
-        btnSettings.setVisible(false);
+        btnSettings.setVisible(true);
 
 		setDefaultLookAndFeelDecorated(true);
         
@@ -385,7 +555,21 @@ public class PlayerUI extends javax.swing.JFrame {
         ToolTipManager.sharedInstance().setInitialDelay(0);
     }
 
-    protected void toggleFullScreenForSelectedMonitor() {
+    protected void updateVolumeButton() {
+		if (audio == true) {
+			
+			if ((Integer) spinnerVolume.getValue() > 0) {
+				btnVolume.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-mute-32.png")));
+			} else {
+				btnVolume.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-audio-32.png")));
+			}
+			
+		} else {
+			btnVolume.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-audio-32.png")));
+		}
+	}
+
+	protected void toggleFullScreenForSelectedMonitor() {
     	int index = 0;
     	if (PLAY_MODE  == PlayMode.Live) {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
@@ -466,7 +650,7 @@ public class PlayerUI extends javax.swing.JFrame {
     		return null;
     	}
     	
-    	Date date = (Date) spinner.getValue();
+    	Date date = (Date) spinnerPlaybackTime.getValue();
     	
     	int hours = date.getHours();
     	int minutes = date.getMinutes();
@@ -581,12 +765,16 @@ public class PlayerUI extends javax.swing.JFrame {
     	if (mode == PlayMode.Live) {
     		btnLive.setEnabled(false);
     		btnPlayback.setEnabled(true);
+    		btnSeek.setEnabled(false);
+    		spinnerPlaybackTime.setEnabled(false);
             cboDate.setEnabled(false);
             jPanel3.removeVideoPlayback();
     	} else if (mode == PlayMode.Playback) {
     		btnPlayback.setEnabled(false);
     		btnLive.setEnabled(true);
     		cboDate.setEnabled(true);
+    		btnSeek.setEnabled(true);
+    		spinnerPlaybackTime.setEnabled(true);
     		api.getVideoData(Calendar.getInstance().getTime());
     		jPanel3.removeVideoStreams();
     		
@@ -600,21 +788,27 @@ public class PlayerUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private JSpinner spinner;
+    private JSpinner spinnerPlaybackTime,spinnerPlaybackSpeed,spinnerVolume;
     private JComboBox<String> cboDate;
     private VideoLayout jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private JTable table;
-    private JButton btnPause;
+    private JToggleButton btnPause;
     private JButton btnEvents;
     private JButton btnNow;
-    private JButton btnMute;
-    private JButton btnSpeed;
+    private JButton btnVolume;
+    private JButton btnSeek;
+    private JToggleButton btnSpeed;
     private JPopupMenu popupMenu;
     private JMenuItem mntmAdd;
     private JMenuItem mntmRemove;
     private JMenuItem menuItem;
     private JMenuItem mntmFullscreen;
+    private JButton btnReplay10;
+    private JButton btnReplay5;
+    private JButton btnForward5;
+    private JButton btnForward10;
+    private JButton btnForward30;
 
 	private void addMonitorsToList(TreeMap<String, ShinobiMonitor> monitors) {
 		
@@ -676,6 +870,8 @@ public class PlayerUI extends javax.swing.JFrame {
 		Live,
 		Playback
 	}
+	
+	
 	private static void addPopup(Component component, final JPopupMenu popup) {
 		component.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e) {

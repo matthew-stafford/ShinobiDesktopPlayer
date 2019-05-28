@@ -93,7 +93,38 @@ public class VideoFrame extends JInternalFrame {
 			mpv.kill();
 		}
 	}
-		
+	
+	public void pauseStream() {
+		if (mpv != null) {
+			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"pause\",true]}' | socat - /tmp/cctv_"+windowId);
+		}
+	}
+	
+	public void resumeStream() {
+		if (mpv != null) {
+			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"pause\",false]}' | socat - /tmp/cctv_"+windowId);
+		}
+	}
+	
+	public void setSpeed(double speed) {
+		if (mpv != null) {
+			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"speed\","+speed+"]}' | socat - /tmp/cctv_"+windowId);
+		}
+	}
+	
+	public void setVolume(int volume) {
+		if (mpv != null) {
+			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"volume\","+volume+"]}' | socat - /tmp/cctv_"+windowId);
+		}
+	}
+	
+	
+	/**
+	 * --prefetch-playlist=yes to automatically prebuffer next vdo when the other has finished loading
+	 * must setup playlist first though
+	 * @param time
+	 * @param removeable
+	 */
 	public void playVideoPlayback(Date time, boolean removeable) {
 		if (mpv == null) {
 			if (windowId != null && monitor != null) {
