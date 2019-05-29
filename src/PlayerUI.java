@@ -67,6 +67,7 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static String WINDOW_TITLE;
 	private boolean audio = false;
 	private boolean speed = false;
+	private boolean paused = false;
 
     public PlayerUI() {
     	
@@ -151,9 +152,9 @@ public class PlayerUI extends javax.swing.JFrame {
 
         jLabel3.setText("Sources");
         
-        JButton btnSettings = new JButton("");
+        btnSettings = new JButton("");
         btnSettings.setEnabled(true);
-        btnSettings.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/settings.png")));
+        btnSettings.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-settings-32.png")));
         
         spinnerPlaybackTime = new JSpinner(new SpinnerDateModel() );
         spinnerPlaybackTime.setEnabled(false);
@@ -324,20 +325,26 @@ public class PlayerUI extends javax.swing.JFrame {
         
         
         btnPause = new JToggleButton("");
-        btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-play-32.png")));
+        btnPause.setEnabled(false);
+        btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));
         btnPause.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		
+        		jPanel3.pauseAll(paused);
+        		if (paused) {
+        			btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));			
+        		} else {
+        			btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-play-32.png")));
+        		}
+        		paused = !paused;
         	}
         });
         
         btnEvents = new JButton("");
+        btnEvents.setEnabled(false);
         btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
         
-        btnNow = new JButton("");
-        btnNow.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-end-32.png")));
-        
         btnVolume = new JButton("");
+        btnVolume.setEnabled(false);
         btnVolume.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
         		if (audio == false) {
@@ -359,6 +366,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnVolume.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-audio-32.png")));
         
         btnSpeed = new JToggleButton("");
+        btnSpeed.setEnabled(false);
         btnSpeed.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-speed-32.png")));
         btnSpeed.addActionListener(new ActionListener() {
 			
@@ -379,6 +387,7 @@ public class PlayerUI extends javax.swing.JFrame {
 		});
         
         spinnerPlaybackSpeed = new JSpinner();
+        spinnerPlaybackSpeed.setEnabled(false);
         spinnerPlaybackSpeed.addChangeListener(new ChangeListener() {
         	public void stateChanged(ChangeEvent arg0) {
         		if (speed == true) {
@@ -414,25 +423,62 @@ public class PlayerUI extends javax.swing.JFrame {
 		nf1.setOverwriteMode(true);
 		nf1.setCommitsOnValidEdit(true);
 		
-        JButton btnReplay30 = new JButton("");
+        btnReplay30 = new JButton("");
+        btnReplay30.setEnabled(false);
+        btnReplay30.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		jPanel3.seekAll(-30);
+        	}
+        });
         btnReplay30.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-30-32.png")));
         
         btnReplay10 = new JButton("");
+        btnReplay10.setEnabled(false);
+        btnReplay10.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		jPanel3.seekAll(-10);
+        	}
+        });
         btnReplay10.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-10-32.png")));
         
         btnReplay5 = new JButton("");
+        btnReplay5.setEnabled(false);
+        btnReplay5.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		jPanel3.seekAll(-5);
+        	}
+        });
         btnReplay5.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-5-32.png")));
         
         btnForward5 = new JButton("");
+        btnForward5.setEnabled(false);
+        btnForward5.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		jPanel3.seekAll(5);
+        	}
+        });
         btnForward5.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-5-32.png")));
         
         btnForward10 = new JButton("");
+        btnForward10.setEnabled(false);
+        btnForward10.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		jPanel3.seekAll(10);
+        	}
+        });
         btnForward10.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-10-32.png")));
         
         btnForward30 = new JButton("");
+        btnForward30.setEnabled(false);
+        btnForward30.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		jPanel3.seekAll(30);
+        	}
+        });
         btnForward30.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-30-32.png")));
         
         spinnerVolume = new JSpinner();
+        spinnerVolume.setEnabled(false);
 		spinnerVolume.setModel(new SpinnerNumberModel(100,0,1000,1));
 
 		JSpinner.NumberEditor ne = new JSpinner.NumberEditor(spinnerVolume);
@@ -471,6 +517,10 @@ public class PlayerUI extends javax.swing.JFrame {
 				jPanel3.setVolume((Integer)spinnerVolume.getValue());
 			}
 		});
+        
+        btnDownload = new JButton("");
+        btnDownload.setEnabled(false);
+        btnDownload.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-download-from-cloud-32.png")));
 		
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2Layout.setHorizontalGroup(
@@ -492,9 +542,9 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addComponent(btnForward10, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(btnForward30, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
-        			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
         			.addGap(180)
+        			.addComponent(btnDownload, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
+        			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(btnVolume, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
         			.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 69, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
@@ -512,11 +562,11 @@ public class PlayerUI extends javax.swing.JFrame {
         				.addComponent(btnForward5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
         				.addComponent(btnForward10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
         				.addComponent(btnForward30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnNow, GroupLayout.PREFERRED_SIZE, 46, Short.MAX_VALUE)
         				.addComponent(spinnerPlaybackSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
         				.addComponent(btnEvents, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
         				.addComponent(btnVolume, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE))
+        				.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+        				.addComponent(btnDownload, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE))
         			.addContainerGap())
         );
         jPanel2.setLayout(jPanel2Layout);
@@ -617,6 +667,8 @@ public class PlayerUI extends javax.swing.JFrame {
 				}
 			}	
 		}
+    	
+    	enableButtons();
     }
     
     public void removeSelectedVideoFromLayout() {
@@ -642,6 +694,29 @@ public class PlayerUI extends javax.swing.JFrame {
 				}
 			}	
 		}
+    	
+    	enableButtons();
+    }
+    
+    private void enableButtons() {
+    	boolean enabled = false;
+    	if (jPanel3.getComponentCount() > 0) {
+    		enabled = true;
+    	}
+		btnReplay10.setEnabled(enabled);
+		btnReplay5.setEnabled(enabled);
+		btnReplay30.setEnabled(enabled);
+		btnForward5.setEnabled(enabled);
+		btnForward10.setEnabled(enabled);
+		btnForward30.setEnabled(enabled);
+		btnEvents.setEnabled(enabled);
+		btnPause.setEnabled(enabled);
+		btnSeek.setEnabled(enabled);
+		btnSpeed.setEnabled(enabled);
+		btnVolume.setEnabled(enabled);
+		btnDownload.setEnabled(enabled);
+		spinnerPlaybackSpeed.setEnabled(enabled);
+		spinnerVolume.setEnabled(enabled);		
     }
     
     
@@ -795,7 +870,6 @@ public class PlayerUI extends javax.swing.JFrame {
     private JTable table;
     private JToggleButton btnPause;
     private JButton btnEvents;
-    private JButton btnNow;
     private JButton btnVolume;
     private JButton btnSeek;
     private JToggleButton btnSpeed;
@@ -806,9 +880,12 @@ public class PlayerUI extends javax.swing.JFrame {
     private JMenuItem mntmFullscreen;
     private JButton btnReplay10;
     private JButton btnReplay5;
+    private JButton btnReplay30;
     private JButton btnForward5;
     private JButton btnForward10;
     private JButton btnForward30;
+    private JButton btnDownload;
+    private JButton btnSettings;
 
 	private void addMonitorsToList(TreeMap<String, ShinobiMonitor> monitors) {
 		

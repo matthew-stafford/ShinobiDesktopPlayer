@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TreeSet;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -30,6 +31,7 @@ public class ShinobiMonitor {
 	
 	public boolean recording = false;
 	// key for videos will be YYYY-MM-DD
+	public TreeSet<ShinobiVideo> video = new TreeSet<ShinobiVideo>();
 	public HashMap<String,ArrayList<ShinobiVideo>> videos = new HashMap<String,ArrayList<ShinobiVideo>>();
 	
 	@Override
@@ -136,6 +138,7 @@ public class ShinobiMonitor {
 			    EntityUtils.consume(entity);
 			    
 			    JsonElement jelement = new JsonParser().parse(json);
+
 			    JsonObject jobject = jelement.getAsJsonObject();
 			    JsonArray jarray = jobject.getAsJsonArray("videos");
 			    for (JsonElement element : jarray) {

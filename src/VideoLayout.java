@@ -191,8 +191,7 @@ public class VideoLayout extends JPanel {
 		}
 	}
 	
-	private boolean paused = false;
-	public void pauseAll() {
+	public void pauseAll(boolean paused) {
 		if (paused) {
 			// resume play on all
 			for (Component c: getComponents()) {
@@ -200,9 +199,7 @@ public class VideoLayout extends JPanel {
 					VideoFrame f = (VideoFrame) c;
 					f.resumeStream();
 				}
-			}		
-			
-			paused = false;
+			}
 		} else {
 			// pause all
 			for (Component c: getComponents()) {
@@ -210,9 +207,7 @@ public class VideoLayout extends JPanel {
 					VideoFrame f = (VideoFrame) c;
 					f.pauseStream();
 				}
-			}		
-			
-			paused = true;
+			}			
 		}
 	}
 
@@ -340,6 +335,16 @@ public class VideoLayout extends JPanel {
 			}
 		}			
 	}
+
+	public void seekAll(int pos) {
+		for (Component c: getComponents()) {
+			if (c instanceof VideoFrame) {
+				VideoFrame f = (VideoFrame) c;
+				f.seek(pos);
+			}
+		}			
+	}
+
 
 
 }
