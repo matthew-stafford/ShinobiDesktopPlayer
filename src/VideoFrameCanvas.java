@@ -1,5 +1,6 @@
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -32,7 +33,6 @@ public class VideoFrameCanvas extends Canvas {
          } else if (_status == status.NoPlaybackVideo) {
         	 drawCenteredString(g2, "NO PLAYBACK VIDEO FILE FOUND",new Rectangle(0,0, getWidth(),getHeight()), myFont);        	 
          }
-         
          
      }
 	

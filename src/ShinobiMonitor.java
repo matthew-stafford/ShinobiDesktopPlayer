@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.http.HttpEntity;
@@ -26,40 +27,102 @@ public class ShinobiMonitor {
 	public String api_key;
 	public String group_key;
 	public String host;
-	public Date start_date, end_date;// for searching videos (must be done when selecting day or takes too long :/)
+	public Date todaysPreviousVideoGetTimestamp = null; // if null, get all, else get from this variable to current time
 	public boolean loadingVideos = false;
 	
 	public boolean recording = false;
 	// key for videos will be YYYY-MM-DD
-	public TreeSet<ShinobiVideo> video = new TreeSet<ShinobiVideo>();
-	public HashMap<String,ArrayList<ShinobiVideo>> videos = new HashMap<String,ArrayList<ShinobiVideo>>();
-	
+	public TreeMap<String, ArrayList<ShinobiVideo>> videoPlaylist = new TreeMap<String, ArrayList<ShinobiVideo>>();
+		
 	@Override
 	public String toString() {
 		return "ShinobiMonitor [mid=" + mid + ", name=" + name + ", stream=" + stream + "]";
 	}
 	
-	public void LoadVideos(Date start_date) {
-		this.start_date = start_date;
-		loadingVideos = true;
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	/**
+	 * Generate an ArrayList of URL's for use as a playlist
+	 * @return ArrayList<String> containing URL's to be used
+	 */
+	public ArrayList<String> generatePlaylist() {
+		ArrayList<String> playlist = new ArrayList<String>();
 		
-		if (sdf.format(start_date).equals(sdf.format(Calendar.getInstance().getTime()))) {
-			// if day == today then clear since updated videos could be available for playback
-			// videos.clear();
-		} 
-				
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(start_date);
-		cal.add(Calendar.DATE, 1);
-		this.end_date = cal.getTime();
-		
-		// only load if not already in hashmap
-		if (!videos.containsKey(sdf.format(start_date))) {
-			get_videos();
+		for (ArrayList<ShinobiVideo> videoList : videoPlaylist.values()) {
+			for (ShinobiVideo sv : videoList) {
+				playlist.add(sv.href);
+			}
 		}
-		loadingVideos = false;
 		
+		return playlist;
+	}
+	
+	/**
+	 * Loads video data from API
+	 * @param date - start date for getting video data. Time will be reset to 00:00:00 to get data for the day
+	 */
+	public void LoadVideos(Date date) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+		SimpleDateFormat shinobiFormat = new SimpleDateFormat("yyyy-MM-dd'''T'''HH:mm:ss");
+		
+		// if today
+		if (dateFormat.format(date).equals(dateFormat.format(Calendar.getInstance().getTime()))) {
+			if (todaysPreviousVideoGetTimestamp == null) {
+				// get all videos for today, and save time last retrieved
+				Date endDate = Calendar.getInstance().getTime(); // now
+				
+				Calendar cal = Calendar.getInstance();
+				cal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
+				cal.set(Calendar.MONTH, cal.get(Calendar.MONTH));
+				cal.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH));
+				cal.set(Calendar.HOUR_OF_DAY, 0);
+				cal.set(Calendar.MINUTE, 0);
+				cal.set(Calendar.SECOND, 0);
+				
+				Date startDate = cal.getTime();
+				
+				GetVideos(startDate,endDate);
+				
+				// record timestamp
+				todaysPreviousVideoGetTimestamp = endDate;
+			} else {
+				// get all videos since last update 
+				Date endDate = Calendar.getInstance().getTime(); // now
+				Date startDate = todaysPreviousVideoGetTimestamp; // previous timestamp for today
+				
+				GetVideos(startDate,endDate);
+				
+				// record timestamp
+				todaysPreviousVideoGetTimestamp = endDate;
+			}
+		} else {
+			// videos not today
+			
+			// if not in videoPlaylist, load
+			if (!videoPlaylist.containsKey(dateFormat.format(date))) {
+				
+				Calendar cal = Calendar.getInstance();
+				// set calendar date to requested date
+				cal.setTime(date);
+				// reset time to 00:00:00
+				cal.set(Calendar.HOUR_OF_DAY, 0);
+				cal.set(Calendar.MINUTE, 0);
+				cal.set(Calendar.SECOND, 0);				
+				Date startDate = cal.getTime();				
+				
+				// reset time to requested date
+				cal.setTime(date);
+				// add a day
+				cal.add(Calendar.DATE, 1);
+				// reset time to 00:00:00
+				cal.set(Calendar.HOUR_OF_DAY, 0);
+				cal.set(Calendar.MINUTE, 0);
+				cal.set(Calendar.SECOND, 0);				
+				
+				Date endDate = cal.getTime();
+				
+				GetVideos(startDate,endDate);
+			}
+		}	
 	}
 
 	public int getVideoFileIndex(Date date) {
@@ -69,14 +132,14 @@ public class ShinobiMonitor {
 		cal.setTimeZone(cal.getTimeZone());
 		cal.setTime(date);
 		
-		if (videos.containsKey(sdf.format(date))) {
-			for (int i = 0; i < videos.get(sdf.format(date)).size(); i++) {
+		if (videoPlaylist.containsKey(sdf.format(date))) {
+			for (int i = 0; i < videoPlaylist.get(sdf.format(date)).size(); i++) {
 				Calendar endTime = Calendar.getInstance();
-				endTime.setTime(videos.get(sdf.format(date)).get(i).endTime);
+				endTime.setTime(videoPlaylist.get(sdf.format(date)).get(i).endTime);
 				endTime.setTimeZone(endTime.getTimeZone());
 				
 				Calendar startTime = Calendar.getInstance();
-				startTime.setTime(videos.get(sdf.format(date)).get(i).startTime);
+				startTime.setTime(videoPlaylist.get(sdf.format(date)).get(i).startTime);
 				startTime.setTimeZone(startTime.getTimeZone());
 				
 				
@@ -94,9 +157,9 @@ public class ShinobiMonitor {
 			return null;
 		}
 			
-		System.out.println("Filename: "+videos.get(sdf.format(date)).get(index).filename);
+		System.out.println("Filename: "+videoPlaylist.get(sdf.format(date)).get(index).filename);
 			
-		return videos.get(sdf.format(date)).get(index).filename;
+		return videoPlaylist.get(sdf.format(date)).get(index).filename;
 	}
 	
 	// mpv uses seconds for seek pos
@@ -106,18 +169,35 @@ public class ShinobiMonitor {
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		
-		long seconds = (date.getTime() - videos.get(sdf.format(date)).get(index).startTime.getTime()) / 1000;
+		long seconds = (date.getTime() - videoPlaylist.get(sdf.format(date)).get(index).startTime.getTime()) / 1000;
 		
 		System.out.println("File seek pos: "+seconds);
 		return (int) seconds;
 		
 	}
+	
+	/**
+	 * Load videos from Shinobi API
+	 * 
+	 * if (date is not today) AND videos have already been loaded for that date, do nothing for that date
+	 * if (date is not today) AND (video does not contain any videos for the date) then get all videos for the date
+	 * if (date is today) AND (previous get video timestamp is null) then get all videos for today
+	 * if (date is today) AND (previous get video timestamp is not null) then get all videos for today since latest timestamp
+	 * if (date is before today) AND (day before date videos is empty) get videos for day before date (so seeking before 00 will work)
+	 * if (date is before today) AND (day after date videos is empty) get videos for day after date (so seeking after 23:59:59 will work)
+	 * 
+	 * @param date
+	 */
+	public void GetVideosAsync(Date date) {
 		
-	public void get_videos() {
+	}
+		
+	public void GetVideos(Date startDate, Date endDate) {
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat shinobiFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 						
-			String url = "/"+api_key+"/videos/"+group_key+"/"+mid+"?start="+sdf.format(start_date)+"T00:00:00&end="+sdf.format(end_date)+"T00:00:00";
+			String url = "/"+api_key+"/videos/"+group_key+"/"+mid+"?start="+shinobiFormat.format(startDate)+"&end="+shinobiFormat.format(endDate);
 			
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			
@@ -151,23 +231,20 @@ public class ShinobiMonitor {
 			    	
 			    	System.out.println("Date="+date);
 			    	
-			    	String mid = video_data.get("mid").getAsString();
-			    	
 			    	ShinobiVideo sv = new ShinobiVideo();
 			    	sv.startTime = sv.parseShinobiTime(startTime);
 			    	sv.endTime = sv.parseShinobiTime(endTime);
 			    	sv.filename = video_data.get("filename").getAsString();
 			    	sv.href = video_data.get("href").getAsString();
 			    	
-			    	if (videos.get(date) == null) {
-			    		videos.put(date, new ArrayList<ShinobiVideo>());
+			    	if (videoPlaylist.get(date) == null) {
+			    		videoPlaylist.put(date, new ArrayList<ShinobiVideo>());
 			    	}
-			    	videos.get(date).add(sv);
+			    	videoPlaylist.get(date).add(sv);
 			    	
 			    }
 			    
 			    System.out.println("Finished loading videos for "+mid);
-
 			    
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -176,7 +253,6 @@ public class ShinobiMonitor {
 			e.printStackTrace();
 		}		
 	}
-		
 	
 	
 }

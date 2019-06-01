@@ -2,10 +2,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class ShinobiVideo {
-	public Date startTime;
-	public Date endTime;
-	public Date duration;
+public class ShinobiVideo implements Comparable<ShinobiVideo> {
+	public Date endTime,startTime;
 	public String timeZone;
 	public String href;
 	public String filename;
@@ -46,5 +44,38 @@ public class ShinobiVideo {
 		
 		return returnDate;
 		
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((href == null) ? 0 : href.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ShinobiVideo other = (ShinobiVideo) obj;
+		if (href == null) {
+			if (other.href != null)
+				return false;
+		} else if (!href.equals(other.href))
+			return false;
+		return true;
+	}
+
+
+	@Override
+	public int compareTo(ShinobiVideo sv) {
+		return sv.startTime.compareTo(startTime);
 	}
 }

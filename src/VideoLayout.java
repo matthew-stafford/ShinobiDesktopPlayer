@@ -1,5 +1,7 @@
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
@@ -9,7 +11,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 public class VideoLayout extends JPanel {
 
@@ -26,7 +30,7 @@ public class VideoLayout extends JPanel {
 		Playback
 	}
 	
-	public VideoLayout() {
+	public VideoLayout() {  
 		addComponentListener(new ComponentListener() {
 			
 			@Override

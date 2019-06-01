@@ -3,23 +3,51 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 
 public class MPVManager implements Runnable {
 
 	public static ArrayList<Process> processes = new ArrayList<Process>();
+	public ArrayList<String> playlist = new ArrayList<String>();
 	public String cmd;
 	private Process process = null;
 	
 	public String getValueFromResult(String json, String key) {
-		JsonElement jelement = new JsonParser().parse(json);
-		JsonObject json_data = jelement.getAsJsonObject();
-		if (json_data.get(key) != null && !json_data.get(key).isJsonNull()) {
-			return json_data.get(key).getAsString();
+		try {
+			System.out.println("Attempting to parse "+json);
+			JsonElement jelement = new JsonParser().parse(json);
+			if (jelement != null && !jelement.isJsonNull()) {
+				JsonObject json_data = jelement.getAsJsonObject();
+				if (json_data.get(key) != null && !json_data.get(key).isJsonNull()) {
+					return json_data.get(key).getAsString();
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
-		return "";
+		return null;
+	}
+	
+	public ArrayList<String> getPlaylist(String json) {
+		ArrayList<String> playlist = new ArrayList<String>();
+		try {
+			JsonElement jelement = new JsonParser().parse(json);
+			if (jelement != null && !jelement.isJsonNull()) {
+				JsonObject  jobject = jelement.getAsJsonObject();
+				JsonArray json_array = jobject.getAsJsonArray("data");
+				for (int i = 0; i < json_array.size();i++) {
+					JsonObject files = json_array.get(i).getAsJsonObject();
+					playlist.add(files.get("filename").getAsString());
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return playlist;
 	}
 	
 	public String sendCommand(String cmd) {
@@ -31,6 +59,7 @@ public class MPVManager implements Runnable {
 	                .start();
 	        BufferedReader br = new BufferedReader(
 	                new InputStreamReader(p.getInputStream()));
+	        processes.add(p);
 	            String line = null;
 	            while ( (line = br.readLine()) != null ) {
 	            	result = result+line;
@@ -68,6 +97,7 @@ public class MPVManager implements Runnable {
             BufferedReader br = new BufferedReader(
                     new InputStreamReader(process.getInputStream()));
                 String line = null;
+                processes.add(process);
                 while ( (line = br.readLine()) != null ) {
                 	
                 }
