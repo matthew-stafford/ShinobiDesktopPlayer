@@ -1,8 +1,14 @@
+import java.awt.AWTEvent;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
@@ -20,44 +26,129 @@ import java.util.Collections;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
+import javax.swing.JLayer;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.SwingUtilities;
+import javax.swing.plaf.LayerUI;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
 
-public class VideoFrame extends JInternalFrame implements Runnable {
+public class VideoFrame extends JPanel implements Runnable {
 
 	public String windowId;
 	public VideoFrameCanvas videoCanvas;
 	public ShinobiMonitor monitor;
 	private MPVManager mpv;
 	private ArrayList<String> videoPlaylist;
+	private boolean overlay = true;
 	
+	
+	private JButton btnFull, btnRemove, btnMute, btnEvents, btnDownload, btnPlay;
+	
+	private JPanel overlayPanel = new JPanel();
 	
 	public VideoFrame(ShinobiMonitor monitor) {
 		super();
 		
-		this.monitor = monitor;
-				
+		this.monitor = monitor;				
+
+		btnFull = new JButton();
+		btnFull.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-widescreen-32.png")));
+		btnFull.setBounds(getWidth()-51,1,40,40);
+		
+		btnPlay = new JButton();
+		btnPlay.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));
+		btnPlay.setBounds(11,1,40,40);
+		
+		btnRemove = new JButton();
+		btnRemove.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-delete-32.png")));
+		btnRemove.setBounds(getWidth()-101,1,40,40);
+		
+		btnMute = new JButton();
+		btnMute.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-mute-32.png")));
+		btnMute.setBounds(161,1,40,40);
+		
+		btnEvents = new JButton();
+		btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
+		btnEvents.setBounds(61,1,40,40);
+		
+		btnDownload = new JButton();
+		btnDownload.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-download-from-cloud-32.png")));
+		btnDownload.setBounds(111,1,40,40);
+		
+		overlayPanel.setBackground(Color.black);
+		overlayPanel.add(btnFull);
+		overlayPanel.add(btnRemove);
+		overlayPanel.add(btnMute);
+		overlayPanel.add(btnEvents);
+		overlayPanel.add(btnDownload);
+		overlayPanel.add(btnPlay);
+		
         putClientProperty("JInternalFrame.isPalette", Boolean.TRUE);
-        getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-        ((BasicInternalFrameUI) getUI()).setNorthPane(null);
+       	
         setBorder(null);
         setBounds(0,0,640,320);
         
-        getRootPane().setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.BLACK));
-
 		// create canvas
-        videoCanvas = new VideoFrameCanvas();
+        videoCanvas = new VideoFrameCanvas(monitor.mid);
 		videoCanvas.setSize(getWidth(),getHeight());	
 		videoCanvas.setIgnoreRepaint(false);
         		
-		add(videoCanvas);
 		
         setVisible(true);
         
+      
+		add(videoCanvas);
+		
+		add(overlayPanel);
+		
+		overlayPanel.addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				if (arg0.getY() < 0) {
+					// mouse moved up to canvas, dont hide
+					//hideOverlay();
+				} else if (arg0.getX() >= getWidth()) {
+					hideOverlay();
+				} else if (arg0.getX() <= 0) {
+					hideOverlay();
+				} else if (arg0.getY() > 49) {
+					hideOverlay();
+				}
+				
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
 		addComponentListener(new ComponentListener() {
 			
 			@Override
@@ -84,8 +175,30 @@ public class VideoFrame extends JInternalFrame implements Runnable {
 		
 	}
 	
+	protected void showOverlay() {
+		System.out.println("Showing overlay");
+		overlay = true;
+		reSize(getWidth(), getHeight());
+	}
+	
+	public void hideOverlay() {
+		System.out.println("Hiding overlay");
+		overlay = false;
+		reSize(getWidth(), getHeight());
+	}
+
 	public void reSize(int width, int height) {
-		videoCanvas.setSize(width,height);			
+		
+		//videoCanvas.setBounds(1,1,width-2,(overlay ? height-50:height)-2);	
+		videoCanvas.setBounds(0,0,width,(overlay?height-50:height));
+		overlayPanel.setBounds(0,(overlay? height-50: 0), width,(overlay ? 50 : 0));
+		btnFull.setBounds(getWidth()-51,1,40,40);
+		btnPlay.setBounds(11,1,40,40);
+		btnRemove.setBounds(getWidth()-101,1,40,40);
+		btnMute.setBounds(161,1,40,40);
+		btnEvents.setBounds(61,1,40,40);
+		btnDownload.setBounds(111,1,40,40);
+
 	}
 	
 	public void playStream() {

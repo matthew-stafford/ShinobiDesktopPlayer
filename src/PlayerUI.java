@@ -71,6 +71,41 @@ public class PlayerUI extends javax.swing.JFrame {
 
     public PlayerUI() {
     	
+    	
+    	
+    	addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+			//	System.out.println("UI Mouse Enter triggered removing overlay");
+				//jPanel3.removeOverlays();
+			}
+			
+			
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+    	
     	addWindowListener(new WindowListener() {
 			
 			@Override

@@ -15,7 +15,11 @@ public class VideoFrameCanvas extends Canvas {
 		NoPlaybackVideo
 	}
 	
+	public String mid;
 	public status _status = status.Loading;
+	public VideoFrameCanvas(String mid) {
+		this.mid = mid;
+	}
 
 	public void paint(Graphics g) {
 		 Graphics2D g2;

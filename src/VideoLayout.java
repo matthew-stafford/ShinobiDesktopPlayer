@@ -1,7 +1,12 @@
+import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.MenuItem;
+import java.awt.MouseInfo;
 import java.awt.PopupMenu;
+import java.awt.Robot;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
@@ -14,12 +19,16 @@ import java.util.Date;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 
 public class VideoLayout extends JPanel {
 
 	private Layout currentLayout = Layout.LayoutGrid;
 	private PlayMode playMode = PlayMode.Live;
 	private ArrayList<String> windowIds = new ArrayList<String>();
+	Robot robot;
+	
+	
 	
 	public enum Layout {
 		LayoutGrid
@@ -31,6 +40,52 @@ public class VideoLayout extends JPanel {
 	}
 	
 	public VideoLayout() {  
+		//capture mouse enter/exit events
+		long eventMask = AWTEvent.MOUSE_EVENT_MASK;
+
+    	Toolkit.getDefaultToolkit().addAWTEventListener( new AWTEventListener()
+    	{
+    	    public void eventDispatched(AWTEvent e)
+    	    {
+    	    	if (e instanceof java.awt.event.MouseEvent) {
+    	    		MouseEvent me = (MouseEvent) e;
+    	    	
+	    	    	// 505 = mouse_exit
+	    	    	// 504 = mouse_enter
+	    	    	if (e.getID() == 505) {
+	    	    		// mouse exit
+	    	    		if (e.getSource() instanceof VideoFrameCanvas) {
+	    	    			VideoFrameCanvas vfc = (VideoFrameCanvas) e.getSource();
+		    	    		for (Component c : getComponents() ) {
+		    	    			if (c instanceof VideoFrame) {	    	    				
+		    	    				VideoFrame f = (VideoFrame) c;
+		    	    				if (f.getComponentAt(me.getX(), me.getY()) == null || !SwingUtilities.isDescendingFrom((Component)e.getSource(), f)) {		    	    				
+			    	    				if (f.monitor.mid.equals(vfc.mid)) {
+			    	    					f.hideOverlay();			    	    					
+			    	    				}
+		    	    				}
+		    	    			}
+		    	    		}
+	    	    		}
+	    	    	} else if (e.getID() == 504) {
+	    	    		// mouse enter
+	    	    		if (e.getSource() instanceof VideoFrameCanvas) {
+	    	    			VideoFrameCanvas vfc = (VideoFrameCanvas) e.getSource();
+		    	    		for (Component c : getComponents() ) {
+		    	    			if (c instanceof VideoFrame) {	    	    				
+		    	    				VideoFrame f = (VideoFrame) c;
+		    	    				if (f.monitor.mid.equals(vfc.mid)) {
+		    	    					f.showOverlay();		    	    					
+		    	    				}
+		    	    			}
+		    	    		}
+	    	    		}
+	    	    	}
+    	    	}
+    	    }
+    	}, eventMask);
+    	
+		
 		addComponentListener(new ComponentListener() {
 			
 			@Override
@@ -348,7 +403,5 @@ public class VideoLayout extends JPanel {
 			}
 		}			
 	}
-
-
 
 }
