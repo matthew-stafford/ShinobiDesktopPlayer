@@ -1,10 +1,13 @@
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
@@ -18,7 +21,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +57,8 @@ public class VideoFrame extends JPanel implements Runnable {
 	private JButton btnFull, btnRemove, btnMute, btnEvents, btnDownload, btnPlay;
 	
 	private JPanel overlayPanel = new JPanel();
+	private boolean paused = false;
+	private boolean audio = false;
 	
 	public VideoFrame(ShinobiMonitor monitor) {
 		super();
@@ -64,6 +72,17 @@ public class VideoFrame extends JPanel implements Runnable {
 		btnPlay = new JButton();
 		btnPlay.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));
 		btnPlay.setBounds(11,1,40,40);
+		btnPlay.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (paused) {
+					resumeStream();
+				} else {
+					pauseStream();
+				}
+			}
+		});
 		
 		btnRemove = new JButton();
 		btnRemove.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-delete-32.png")));
@@ -72,6 +91,17 @@ public class VideoFrame extends JPanel implements Runnable {
 		btnMute = new JButton();
 		btnMute.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-mute-32.png")));
 		btnMute.setBounds(161,1,40,40);
+		btnMute.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if(audio) {
+					setVolume(0);
+				} else {
+					setVolume(PlayerUI.GLOBAL_VOLUME);
+				}
+			}
+		});
 		
 		btnEvents = new JButton();
 		btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
@@ -80,7 +110,13 @@ public class VideoFrame extends JPanel implements Runnable {
 		btnDownload = new JButton();
 		btnDownload.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-download-from-cloud-32.png")));
 		btnDownload.setBounds(111,1,40,40);
-		
+		btnDownload.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				downloadCurrentFile();
+			}
+		});
 		overlayPanel.setBackground(Color.black);
 		overlayPanel.add(btnFull);
 		overlayPanel.add(btnRemove);
@@ -226,12 +262,30 @@ public class VideoFrame extends JPanel implements Runnable {
 	public void pauseStream() {
 		if (mpv != null) {
 			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"pause\",true]}' | socat - /tmp/cctv_"+windowId);
+			btnPlay.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-play-32.png")));
+			paused = true;
 		}
 	}
 	
 	public void resumeStream() {
 		if (mpv != null) {
 			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"pause\",false]}' | socat - /tmp/cctv_"+windowId);
+			btnPlay.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));
+			paused = false;
+		}
+	}
+	
+	public void downloadCurrentFile() {
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+		    try {
+		    	String videoBeingPlayed = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"get_property\", \"filename\"] }' | socat - /tmp/cctv_"+windowId),"data");
+				System.out.println("video="+videoBeingPlayed);
+				Desktop.getDesktop().browse(new URI(monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+videoBeingPlayed));
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -243,6 +297,14 @@ public class VideoFrame extends JPanel implements Runnable {
 	
 	public void setVolume(int volume) {
 		if (mpv != null) {
+			if (volume == 0) {
+				audio = false;
+				btnMute.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-mute-32.png")));
+			} else {
+				audio = true;
+				btnMute.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-audio-32.png")));
+			}
+			System.out.println("Setting volume to "+volume);
 			mpv.sendCommand("echo '{\"command\": [\"set_property\",\"volume\","+volume+"]}' | socat - /tmp/cctv_"+windowId);
 		}
 	}

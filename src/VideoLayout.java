@@ -102,7 +102,8 @@ public class VideoLayout extends JPanel {
 			@Override
 			public void componentMoved(ComponentEvent e) {
 				System.out.println("component moved");
-				
+				updateLayout();
+
 			}
 			
 			@Override

@@ -40,6 +40,7 @@ import javax.swing.SpinnerDateModel;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import javax.swing.text.DateFormatter;
 import javax.swing.text.NumberFormatter;
 import javax.swing.JTextField;
@@ -65,6 +66,9 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static String apiKey;
 	public static String groupKey;
 	public static String WINDOW_TITLE;
+
+	public static int GLOBAL_VOLUME = 100;
+	
 	private boolean audio = false;
 	private boolean speed = false;
 	private boolean paused = false;
@@ -382,6 +386,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnVolume.setEnabled(false);
         btnVolume.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
+        		GLOBAL_VOLUME = (Integer) spinnerVolume.getValue();
         		if (audio == false) {
         			audio = true;
         			
@@ -530,7 +535,8 @@ public class PlayerUI extends javax.swing.JFrame {
 		            if (newValue <= 1000 && newValue >= 0) {
 		            	audio = true;
 						updateVolumeButton();
-						jPanel3.setVolume((Integer)newValue);
+		        		GLOBAL_VOLUME =  newValue;
+						jPanel3.setVolume(GLOBAL_VOLUME);
 		            }
 		            jtf.setCaretPosition(oldCaretPos);
 		        } catch(NumberFormatException ex) {
@@ -834,6 +840,11 @@ public class PlayerUI extends javax.swing.JFrame {
                 	    valid = false;
                 	} 
                 	
+                	// tidy trailing / from host if there
+                	if (host.endsWith("/")) {
+            			host = host.substring(0, host.length()-1);
+            		}
+                	
                 	if (!valid) {
                 		System.out.println("Ini not configured, exiting");
                 		ConfigUI cfg = new ConfigUI(host,apiKey,groupKey);
@@ -970,6 +981,10 @@ public class PlayerUI extends javax.swing.JFrame {
 	        ));
 		table.getColumn("Name").setPreferredWidth(400);
 		table.getColumn("Monitor ID").setPreferredWidth(1);
+		
+		// hide monitor ID column :)
+		TableColumnModel tcm = table.getColumnModel();
+		tcm.removeColumn( tcm.getColumn(1) );
 	}
 
 	

@@ -196,7 +196,8 @@ public class ShinobiMonitor {
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			SimpleDateFormat shinobiFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-						
+		
+			
 			String url = "/"+api_key+"/videos/"+group_key+"/"+mid+"?start="+shinobiFormat.format(startDate)+"&end="+shinobiFormat.format(endDate);
 			
 			CloseableHttpClient httpclient = HttpClients.createDefault();
