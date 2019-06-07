@@ -39,6 +39,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerDateModel;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.DateFormatter;
@@ -74,9 +75,7 @@ public class PlayerUI extends javax.swing.JFrame {
 	private boolean paused = false;
 
     public PlayerUI() {
-    	
-    	
-    	
+    	    	
     	addMouseListener(new MouseListener() {
 			
 			@Override
@@ -175,6 +174,7 @@ public class PlayerUI extends javax.swing.JFrame {
         
         jPanel3 = new VideoLayout();
         jPanel3.setOpaque(false);
+        jPanel3.setBorder(javax.swing.BorderFactory.createLineBorder(Color.black));
         jPanel3.setBackground(new Color(0,0,0,0));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -378,10 +378,6 @@ public class PlayerUI extends javax.swing.JFrame {
         	}
         });
         
-        btnEvents = new JButton("");
-        btnEvents.setEnabled(false);
-        btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
-        
         btnVolume = new JButton("");
         btnVolume.setEnabled(false);
         btnVolume.addActionListener(new ActionListener() {
@@ -583,30 +579,30 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addComponent(btnForward10, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(btnForward30, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
-        			.addGap(180)
+        			.addGap(271)
         			.addComponent(btnDownload, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(btnVolume, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE)
-        			.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 69, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(btnEvents, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE))
+        			.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 69, GroupLayout.PREFERRED_SIZE)
+        			.addGap(6))
         );
         jPanel2Layout.setVerticalGroup(
         	jPanel2Layout.createParallelGroup(Alignment.LEADING)
         		.addGroup(jPanel2Layout.createSequentialGroup()
         			.addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
-        				.addComponent(btnReplay30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnReplay10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnReplay5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnPause, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnForward5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnForward10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnForward30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(spinnerPlaybackSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnEvents, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(btnVolume, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
-        				.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+        				.addGroup(Alignment.TRAILING, jPanel2Layout.createParallelGroup(Alignment.LEADING)
+        					.addComponent(btnReplay30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnReplay10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnReplay5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnPause, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnForward5, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnForward10, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(btnForward30, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(spinnerPlaybackSpeed, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+        					.addComponent(spinnerVolume, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+        					.addComponent(btnVolume, GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE))
         				.addComponent(btnDownload, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE))
         			.addContainerGap())
         );
@@ -750,12 +746,15 @@ public class PlayerUI extends javax.swing.JFrame {
 		btnForward5.setEnabled(enabled);
 		btnForward10.setEnabled(enabled);
 		btnForward30.setEnabled(enabled);
-		btnEvents.setEnabled(enabled);
 		btnPause.setEnabled(enabled);
 		btnSeek.setEnabled(enabled);
 		btnSpeed.setEnabled(enabled);
 		btnVolume.setEnabled(enabled);
-		btnDownload.setEnabled(enabled);
+		if (PLAY_MODE == PlayMode.Playback) {
+			btnDownload.setEnabled(enabled);
+		} else {
+			btnDownload.setEnabled(false);
+		}
 		spinnerPlaybackSpeed.setEnabled(enabled);
 		spinnerVolume.setEnabled(enabled);		
     }
@@ -840,10 +839,7 @@ public class PlayerUI extends javax.swing.JFrame {
                 	    valid = false;
                 	} 
                 	
-                	// tidy trailing / from host if there
-                	if (host.endsWith("/")) {
-            			host = host.substring(0, host.length()-1);
-            		}
+                	
                 	
                 	if (!valid) {
                 		System.out.println("Ini not configured, exiting");
@@ -854,6 +850,10 @@ public class PlayerUI extends javax.swing.JFrame {
                 		System.out.println("Everything looks ok, continuing");
                 	}
                 	
+                	// tidy trailing / from host if there
+                	if (host.endsWith("/")) {
+            			host = host.substring(0, host.length()-1);
+            		}
                 	
                 	// start creating UI
                 	// check API is valid
@@ -915,7 +915,6 @@ public class PlayerUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private JTable table;
     private JToggleButton btnPause;
-    private JButton btnEvents;
     private JButton btnVolume;
     private JButton btnSeek;
     private JToggleButton btnSpeed;
@@ -1015,5 +1014,9 @@ public class PlayerUI extends javax.swing.JFrame {
 				popup.show(e.getComponent(), e.getX(), e.getY());
 			}
 		});
+	}
+
+	public void fullScreen(String mid) {
+		
 	}
 }

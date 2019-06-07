@@ -3,6 +3,8 @@ import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.TreeMap;
 
+import javax.swing.JOptionPane;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -93,6 +95,10 @@ public class ShinobiAPI {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("EMSG="+e.getLocalizedMessage());
+			if (e.getLocalizedMessage().equals("No route to host (Host unreachable)")) {
+            	JOptionPane.showMessageDialog(null, "Could not establish connection to host. Check server is running and that your host string is correct.\n\nError: No route to host (Host unreachable)", "Error", JOptionPane.ERROR_MESSAGE);	
+			}
 		}
 				
 		return false;

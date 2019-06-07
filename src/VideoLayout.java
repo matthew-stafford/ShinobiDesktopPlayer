@@ -26,8 +26,6 @@ public class VideoLayout extends JPanel {
 	private Layout currentLayout = Layout.LayoutGrid;
 	private PlayMode playMode = PlayMode.Live;
 	private ArrayList<String> windowIds = new ArrayList<String>();
-	Robot robot;
-	
 	
 	
 	public enum Layout {
@@ -85,6 +83,8 @@ public class VideoLayout extends JPanel {
     	    }
     	}, eventMask);
     	
+    	
+    	
 		
 		addComponentListener(new ComponentListener() {
 			
@@ -96,14 +96,12 @@ public class VideoLayout extends JPanel {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				updateLayout();
-				
 			}
 			
 			@Override
 			public void componentMoved(ComponentEvent e) {
 				System.out.println("component moved");
 				updateLayout();
-
 			}
 			
 			@Override
@@ -150,7 +148,7 @@ public class VideoLayout extends JPanel {
 		
 		System.out.println("Creating video frame");
 		// create frame for video		
-		VideoFrame frame = new VideoFrame(monitor);
+		VideoFrame frame = new VideoFrame(monitor,this);
 		add(frame);
 		
 		// get its window Id for passing to mpv
@@ -201,6 +199,7 @@ public class VideoLayout extends JPanel {
 					VideoFrame f = (VideoFrame) c;
 					if (f.monitor.mid.equalsIgnoreCase(monitor.mid)) {
 						f.setBounds(0, 0, getWidth(), getHeight());
+						f.resizeVideoFrame();
 						isFullScreen = true;
 					} else {
 						f.setSize(0,0);
@@ -224,7 +223,7 @@ public class VideoLayout extends JPanel {
 		
 		System.out.println("Creating video frame");
 		// create frame for video		
-		VideoFrame frame = new VideoFrame(monitor);
+		VideoFrame frame = new VideoFrame(monitor, this);
 		add(frame);
 		
 		// get its window Id for passing to mpv
@@ -370,12 +369,14 @@ public class VideoLayout extends JPanel {
 		VideoFrame c = (VideoFrame) getMonitorComponent(monitor);
 		c.stopStream();
 		remove(c);
+		updateLayout();
 	}
 
 	public void removeVideoPlayback(ShinobiMonitor monitor) {
 		VideoFrame c = (VideoFrame) getMonitorComponent(monitor);
 		c.stopStream();
 		remove(c);		
+		updateLayout();
 	}
 
 	public void setVolume(int volume) {
