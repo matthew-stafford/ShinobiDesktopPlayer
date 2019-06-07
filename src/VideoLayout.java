@@ -113,7 +113,16 @@ public class VideoLayout extends JPanel {
 	}
 	
 	private void updateLayout() {
-    	
+    	if (isFullScreen) {
+    		// if full screen, get component with a size > 0 and set to full size of panel
+    		for (Component c: getComponents()) {
+    			if (c.getSize().width > 0 && c.getSize().height > 0) {
+    				c.setBounds(0,0,getWidth(), getHeight());
+    				break;
+    			}
+    		}
+    		return;
+    	}
 		if (currentLayout == Layout.LayoutGrid) {
 			int numberOfComponents = getComponents().length;
 
@@ -207,8 +216,8 @@ public class VideoLayout extends JPanel {
 				}
 			}
 		} else {
-			updateLayout();
 			isFullScreen = false;
+			updateLayout();
 		}
 	}
 
