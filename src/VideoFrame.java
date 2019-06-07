@@ -256,17 +256,17 @@ public class VideoFrame extends JPanel implements Runnable {
 			
 			setSize(getWidth(), getHeight());
 			setBorder(null);
+			setLayout(null);
 			
-			videoCanvas.setBounds(0,0,getWidth(),(overlay?getHeight()-(buttonSize+2):getHeight()));
-			videoCanvas.setSize(getWidth(),(overlay?getHeight()-(buttonSize+2):getHeight()));
-			videoCanvas.setPreferredSize(new Dimension(getWidth(),(overlay?getHeight()-(buttonSize+2):getHeight())));
+			videoCanvas.setBounds(0,0,getWidth(),(overlay?getHeight()-(buttonSize+5):getHeight()));
+			videoCanvas.setSize(getWidth(),(overlay?getHeight()-(buttonSize+5):getHeight()));
+			videoCanvas.setPreferredSize(new Dimension(getWidth(),(overlay?getHeight()-(buttonSize+5):getHeight())));
 			
-			
-			
-			overlayPanel.setBounds(0,(overlay? getHeight()-(buttonSize+2): 0), (overlay? getWidth() : 0),(overlay ? (buttonSize+2) : 0));
-			overlayPanel.setPreferredSize(new Dimension(getWidth(), (overlay ? (buttonSize+2) : 0) ));
 			overlayPanel.setBorder(null);
 			overlayPanel.setLayout(null);
+			overlayPanel.setBounds(0,(overlay? getHeight()-(buttonSize+5): 0), (overlay? getWidth() : 0),(overlay ? (buttonSize+5) : 0));
+			overlayPanel.setPreferredSize(new Dimension(getWidth(), (overlay ? (buttonSize+5) : 0) ));
+			
 			
 			btnPlay.setBounds((buttonSize*0)+5,1,buttonSize,buttonSize);
 			btnPlay.setPreferredSize(new Dimension(buttonSize,buttonSize));
