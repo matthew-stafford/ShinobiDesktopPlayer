@@ -10,9 +10,7 @@ import java.awt.Rectangle;
 public class VideoFrameCanvas extends Canvas {
 
 	public enum status {
-		Loading,
-		NoVideo,
-		NoPlaybackVideo
+		Loading, NoVideo, NoPlaybackVideo, ErrorMpv
 	}
 	
 	public String mid;
@@ -36,6 +34,8 @@ public class VideoFrameCanvas extends Canvas {
         	 drawCenteredString(g2, "NO VIDEO",new Rectangle(0,0, getWidth(),getHeight()), myFont);        	 
          } else if (_status == status.NoPlaybackVideo) {
         	 drawCenteredString(g2, "NO PLAYBACK VIDEO FILE FOUND",new Rectangle(0,0, getWidth(),getHeight()), myFont);        	 
+         } else if (_status == status.ErrorMpv) {
+        	 drawCenteredString(g2, "ERROR LOADING mpv",new Rectangle(0,0, getWidth(),getHeight()), myFont);        	 
          }
          
      }

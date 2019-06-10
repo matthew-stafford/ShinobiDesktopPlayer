@@ -434,6 +434,10 @@ public class VideoFrame extends JPanel implements Runnable {
 				String video = monitor.getVideoFilename(time, videoIndex);
 				
 				if (video != null) {
+
+					videoCanvas._status = videoCanvas._status.Loading;
+					videoCanvas.repaint();
+					
 					int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);					
 					
 					// ipc-server for controlling
@@ -453,7 +457,13 @@ public class VideoFrame extends JPanel implements Runnable {
 								break;
 							}
 							Thread.sleep(150);
+							if (loops > 5) {
+								videoCanvas._status = videoCanvas._status.ErrorMpv;
+								videoCanvas.repaint();
+								break;
+							}
 						} catch (InterruptedException e) {
+							e.printStackTrace();
 						}
 					}
 					
@@ -487,6 +497,10 @@ public class VideoFrame extends JPanel implements Runnable {
 				int videoIndex = monitor.getVideoFileIndex(time);
 				
 				if (videoIndex != -1) {
+
+					videoCanvas._status = videoCanvas._status.Loading;
+					videoCanvas.repaint();
+					
 					String video = monitor.getVideoFilename(time, videoIndex);
 					String videoBeingPlayed = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"get_property\", \"filename\"] }' | socat - /tmp/cctv_"+windowId),"data");
 					if (video.equalsIgnoreCase(videoBeingPlayed)) {
@@ -496,29 +510,7 @@ public class VideoFrame extends JPanel implements Runnable {
 						String result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"time-pos\", "+seekPos+"] }' | socat - /tmp/cctv_"+windowId),"data");
 						System.out.println("result="+result);
 					} else {
-						// play new file 
-						/*System.out.println("Video file is different, requesting playlist pos move + seek");
-						String url = monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video;
-						System.out.println("Loading URL: "+url);
-						int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);
-						System.out.println("Video="+video+" seekPos="+seekPos+" videoIndex="+videoIndex);
-						int playlistIndex = getPlaylistIndex(video);
-						String result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"playlist-pos\", "+playlistIndex+"] }' | socat - /tmp/cctv_"+windowId),"data");
-						System.out.println("result="+result);
-						while (true) {
-							try {
-								result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"time-pos\", "+seekPos+"] }' | socat - /tmp/cctv_"+windowId),"error");
-								if (result.equalsIgnoreCase("success")) {
-									break;
-								}
-								Thread.sleep(100);
-							} catch (Exception e) {
-								
-							}
-						}*/
-						videoCanvas._status = videoCanvas._status.Loading;
-						videoCanvas.repaint();
-						
+						// play new file 						
 						String url = monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video;
 						int playlistIndex = getPlaylistIndex(video);
 						
@@ -539,16 +531,32 @@ public class VideoFrame extends JPanel implements Runnable {
 									break;
 								}
 								Thread.sleep(150);
+								loops++;
+								if (loops > 5) {
+									videoCanvas._status = videoCanvas._status.ErrorMpv;
+									videoCanvas.repaint();
+									
+									break;
+
+								}
 							} catch (InterruptedException e) {
 							}
 						}
-						
-						System.out.println("Loops="+loops);
+												
 						// add rest of playlist to mpv
 						addFilesToPlaylist(videoPlaylist);						
 						
+						// re-apply any settings that are set
+						// if video frame has audio OR global audio is set to true
 						
-						// add rest of playlist to mpv
+						if (audio || vl.playerUI.audio) {
+							setVolume(PlayerUI.GLOBAL_VOLUME);
+						}
+						// playback speed
+						if (vl.playerUI.speed) {
+							setSpeed(vl.playerUI.getSpeed());
+						}
+						
 					}
 				} else {
 					videoCanvas._status = videoCanvas._status.NoPlaybackVideo;

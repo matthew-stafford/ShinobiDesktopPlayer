@@ -69,9 +69,9 @@ public class PlayerUI extends javax.swing.JFrame {
 
 	public static int GLOBAL_VOLUME = 100;
 	
-	private boolean audio = false;
-	private boolean speed = false;
-	private boolean paused = false;
+	public boolean audio = false;
+	public boolean speed = false;
+	public boolean paused = false;
 
     public PlayerUI() {
     	    	    	
@@ -922,6 +922,10 @@ public class PlayerUI extends javax.swing.JFrame {
 	public enum PlayMode {
 		Live,
 		Playback
+	}
+
+	public double getSpeed() {
+		return (Double) spinnerPlaybackSpeed.getValue();
 	}
 
 }

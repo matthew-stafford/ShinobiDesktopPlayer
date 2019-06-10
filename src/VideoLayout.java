@@ -354,38 +354,40 @@ public class VideoLayout extends JPanel {
     }
     
     public ArrayList<String> getWindowIds() {
-		ArrayList<String> ids = new ArrayList<String>();
+    	Random r = new Random();
+    	while (true) {
+    		try {
+    			if (playerUI.getTitle().equals("Shinobi Desktop Player")) {
+    				String original_window_title = playerUI.getTitle();
+					String temporary_window_title = original_window_title +r.nextInt(999999999);
+														
+					playerUI.setTitle(temporary_window_title);
+					
+					ArrayList<String> ids = new ArrayList<String>();	
+					
+					String cmd = "xwininfo -all -name \""+temporary_window_title+"\" | grep sun-awt-X11-XCanvasPeer | awk '{print $1}'";
+					System.out.println(cmd);
+				
+		            Process process = 
+		                new ProcessBuilder(new String[] {"bash", "-c", cmd})
+		                    .redirectErrorStream(true)
+		                    .start();
 		
-		
-		Random r = new Random();
-		
-		String original_window_title = playerUI.getTitle();
-		String temporary_window_title = original_window_title +r.nextInt(999999999);
-		
-		playerUI.setTitle(temporary_window_title);
-		
-		String cmd = "xwininfo -all -name \""+temporary_window_title+"\" | grep sun-awt-X11-XCanvasPeer | awk '{print $1}'";
-		System.out.println(cmd);
-		try {
-            Process process = 
-                new ProcessBuilder(new String[] {"bash", "-c", cmd})
-                    .redirectErrorStream(true)
-                    .start();
-
-            BufferedReader br = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
-            String line = null;
-            while ( (line = br.readLine()) != null ) {
-                ids.add(line);
-            }
-
-        } catch (Exception e) {
-	         e.printStackTrace();
-        }
-		
-		playerUI.setTitle(original_window_title);
-		
-		return ids;
+		            BufferedReader br = new BufferedReader(
+		                new InputStreamReader(process.getInputStream()));
+		            String line = null;
+		            while ( (line = br.readLine()) != null ) {
+		                ids.add(line);
+		            }
+		    		playerUI.setTitle(original_window_title);
+	    			return ids;
+    			} else {
+    				Thread.sleep(100);
+    			}
+	        } catch (Exception e) {
+		         e.printStackTrace();
+	        }
+    	}
 	}
 
 	public void removeVideoStream(ShinobiMonitor monitor) {
