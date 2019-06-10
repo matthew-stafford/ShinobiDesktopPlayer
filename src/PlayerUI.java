@@ -58,7 +58,7 @@ import javax.swing.SwingConstants;
  */
 public class PlayerUI extends javax.swing.JFrame {
 
-	private ShinobiAPI api;
+	public ShinobiAPI api;
 	
 	public static HashMap<String, VideoFrame> videoFrames = new HashMap<String, VideoFrame>();
 	public static Dimension full_screen_size = new Dimension();
@@ -66,7 +66,6 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static String host;
 	public static String apiKey;
 	public static String groupKey;
-	public static String WINDOW_TITLE;
 
 	public static int GLOBAL_VOLUME = 100;
 	
@@ -75,40 +74,7 @@ public class PlayerUI extends javax.swing.JFrame {
 	private boolean paused = false;
 
     public PlayerUI() {
-    	    	
-    	addMouseListener(new MouseListener() {
-			
-			@Override
-			public void mouseReleased(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void mouseExited(MouseEvent arg0) {
-				
-			}
-			
-			@Override
-			public void mouseEntered(MouseEvent arg0) {
-			//	System.out.println("UI Mouse Enter triggered removing overlay");
-				//jPanel3.removeOverlays();
-			}
-			
-			
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-    	
+    	    	    	
     	addWindowListener(new WindowListener() {
 			
 			@Override
@@ -125,7 +91,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			
 			@Override
 			public void windowClosing(WindowEvent e) {
-				for (Component c : jPanel3.getComponents()) {
+				for (Component c : videoLayout.getComponents()) {
 					if (c instanceof VideoFrame) {
 						VideoFrame f = (VideoFrame) c;
 						f.stopStream();
@@ -172,18 +138,14 @@ public class PlayerUI extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         
         
-        jPanel3 = new VideoLayout();
-        jPanel3.setOpaque(false);
-        jPanel3.setBorder(javax.swing.BorderFactory.createLineBorder(Color.black));
-        jPanel3.setBackground(new Color(0,0,0,0));
+        videoLayout = new VideoLayout(this);
+        videoLayout.setOpaque(false);
+        videoLayout.setBorder(javax.swing.BorderFactory.createLineBorder(Color.black));
+        videoLayout.setBackground(new Color(0,0,0,0));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-       
-        // generate random title so xwininfo can identify which window to get
-        // allows for multiple clients 
-        Random r = new Random();        
-        PlayerUI.WINDOW_TITLE = "Shinobi Desktop Player "+r.nextInt(1000000);        
-        setTitle(WINDOW_TITLE);
+
+        setTitle("Shinobi Desktop Player");
 
         jPanel1.setBackground(UIManager.getColor("Button.background"));
 
@@ -213,7 +175,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnSeek.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
         		System.out.println(getDateFromSpinnerAndComboBox());
-        		for (Component c : jPanel3.getComponents()) {
+        		for (Component c : videoLayout.getComponents()) {
         			if (c instanceof VideoFrame) {
         				((VideoFrame) c).playVideoPlayback(getDateFromSpinnerAndComboBox(), false);
         			}
@@ -322,36 +284,6 @@ public class PlayerUI extends javax.swing.JFrame {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);        
         table.setFillsViewportHeight(true);
         jScrollPane1.setViewportView(table);
-        
-        popupMenu = new JPopupMenu();
-        addPopup(table, popupMenu);
-        
-        mntmAdd = new JMenuItem("Add");
-        mntmAdd.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent arg0) {
-        		if (table.getSelectedRow() != -1) {
-        			addSelectedVideoToLayout();
-        		}
-        	}
-        });
-        popupMenu.add(mntmAdd);
-        
-        mntmRemove = new JMenuItem("Remove");
-        popupMenu.add(mntmRemove);
-        
-        menuItem = new JMenuItem("");
-        menuItem.setEnabled(false);
-        popupMenu.add(menuItem);
-        
-        mntmFullscreen = new JMenuItem("Fullscreen");
-        mntmFullscreen.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent arg0) {
-        		if (table.getSelectedRow() != -1) {
-        			toggleFullScreenForSelectedMonitor();
-        		}
-        	}
-        });
-        popupMenu.add(mntmFullscreen);
         jPanel1.setLayout(jPanel1Layout);
     
         
@@ -368,7 +300,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));
         btnPause.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.pauseAll(paused);
+        		videoLayout.pauseAll(paused);
         		if (paused) {
         			btnPause.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));			
         		} else {
@@ -388,14 +320,14 @@ public class PlayerUI extends javax.swing.JFrame {
         			
         			// update button
         			updateVolumeButton();
-        			jPanel3.setVolume((Integer) spinnerVolume.getValue());
+        			videoLayout.setVolume((Integer) spinnerVolume.getValue());
         			
         		} else if (audio == true) {
         			audio = false;     
         			
         			// update button
         			updateVolumeButton();        			
-        			jPanel3.setVolume(0);
+        			videoLayout.setVolume(0);
         		}
         	}
         });
@@ -412,11 +344,11 @@ public class PlayerUI extends javax.swing.JFrame {
 				if (speed == true) {
 					speed = false;
 					// reset speed to 1x
-					jPanel3.setPlaybackSpeed(1.01);
+					videoLayout.setPlaybackSpeed(1.01);
 				} else {
 					speed = true;
 					// change speed to user value
-					jPanel3.setPlaybackSpeed((Double) spinnerPlaybackSpeed.getValue());
+					videoLayout.setPlaybackSpeed((Double) spinnerPlaybackSpeed.getValue());
 				}
 				
 			}
@@ -427,7 +359,7 @@ public class PlayerUI extends javax.swing.JFrame {
         spinnerPlaybackSpeed.addChangeListener(new ChangeListener() {
         	public void stateChanged(ChangeEvent arg0) {
         		if (speed == true) {
-            		jPanel3.setPlaybackSpeed((Double) spinnerPlaybackSpeed.getValue());
+            		videoLayout.setPlaybackSpeed((Double) spinnerPlaybackSpeed.getValue());
 				}
         	}
         });
@@ -445,7 +377,7 @@ public class PlayerUI extends javax.swing.JFrame {
 		            
 		            if (newValue <= 100.00 && newValue >= 0.01) {
 		            	if (speed == true) {
-		            		jPanel3.setPlaybackSpeed((Double)newValue);
+		            		videoLayout.setPlaybackSpeed((Double)newValue);
 						}
 		            }
 		            jtf1.setCaretPosition(oldCaretPos);
@@ -463,7 +395,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnReplay30.setEnabled(false);
         btnReplay30.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.seekAll(-30);
+        		videoLayout.seekAll(-30);
         	}
         });
         btnReplay30.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-30-32.png")));
@@ -472,7 +404,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnReplay10.setEnabled(false);
         btnReplay10.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.seekAll(-10);
+        		videoLayout.seekAll(-10);
         	}
         });
         btnReplay10.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-10-32.png")));
@@ -481,7 +413,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnReplay5.setEnabled(false);
         btnReplay5.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.seekAll(-5);
+        		videoLayout.seekAll(-5);
         	}
         });
         btnReplay5.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-replay-5-32.png")));
@@ -490,7 +422,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnForward5.setEnabled(false);
         btnForward5.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.seekAll(5);
+        		videoLayout.seekAll(5);
         	}
         });
         btnForward5.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-5-32.png")));
@@ -499,7 +431,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnForward10.setEnabled(false);
         btnForward10.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.seekAll(10);
+        		videoLayout.seekAll(10);
         	}
         });
         btnForward10.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-10-32.png")));
@@ -508,7 +440,7 @@ public class PlayerUI extends javax.swing.JFrame {
         btnForward30.setEnabled(false);
         btnForward30.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent arg0) {
-        		jPanel3.seekAll(30);
+        		videoLayout.seekAll(30);
         	}
         });
         btnForward30.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-forward-30-32.png")));
@@ -532,7 +464,7 @@ public class PlayerUI extends javax.swing.JFrame {
 		            	audio = true;
 						updateVolumeButton();
 		        		GLOBAL_VOLUME =  newValue;
-						jPanel3.setVolume(GLOBAL_VOLUME);
+						videoLayout.setVolume(GLOBAL_VOLUME);
 		            }
 		            jtf.setCaretPosition(oldCaretPos);
 		        } catch(NumberFormatException ex) {
@@ -551,7 +483,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			public void stateChanged(ChangeEvent arg0) {
 				audio = true;
 				updateVolumeButton();
-				jPanel3.setVolume((Integer)spinnerVolume.getValue());
+				videoLayout.setVolume((Integer)spinnerVolume.getValue());
 			}
 		});
         
@@ -616,7 +548,7 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addGroup(layout.createParallelGroup(Alignment.LEADING)
         				.addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, 1007, Short.MAX_VALUE)
-        				.addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        				.addComponent(videoLayout, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
         	layout.createParallelGroup(Alignment.TRAILING)
@@ -624,13 +556,13 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addGroup(layout.createParallelGroup(Alignment.TRAILING)
         				.addComponent(jPanel1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 956, Short.MAX_VALUE)
         				.addGroup(layout.createSequentialGroup()
-        					.addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, 904, Short.MAX_VALUE)
+        					.addComponent(videoLayout, GroupLayout.DEFAULT_SIZE, 904, Short.MAX_VALUE)
         					.addPreferredGap(ComponentPlacement.RELATED)
         					.addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)))
         			.addGap(6))
         );
         
-        jPanel3.setLayout(null);
+        videoLayout.setLayout(null);
         
         btnSettings.setVisible(true);
 
@@ -662,7 +594,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.stream != null && monitor.stream.length() > 0) {
 					if (index == table.getSelectedRow()) {
-						jPanel3.fullScreen(monitor);
+						videoLayout.fullScreen(monitor);
 						break;
 					}
 					index++;
@@ -672,7 +604,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.recording == true) {
 					if (index == table.getSelectedRow()) {
-						jPanel3.fullScreen(monitor);
+						videoLayout.fullScreen(monitor);
 						break;
 					}
 					index++;
@@ -687,7 +619,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.stream != null && monitor.stream.length() > 0) {
 					if (index == table.getSelectedRow()) {
-						jPanel3.addVideoStream(monitor);
+						videoLayout.addVideoStream(monitor);
 						break;
 					}
 					index++;
@@ -697,7 +629,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.recording == true) {
 					if (index == table.getSelectedRow()) {
-						jPanel3.addVideoPlayback(monitor, getDateFromSpinnerAndComboBox());
+						videoLayout.addVideoPlayback(monitor, getDateFromSpinnerAndComboBox());
 						break;
 					}
 					index++;
@@ -714,7 +646,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.stream != null && monitor.stream.length() > 0) {
 					if (index == table.getSelectedRow()) {
-						jPanel3.removeVideoStream(monitor);
+						videoLayout.removeVideoStream(monitor);
 						break;
 					}
 					index++;
@@ -724,7 +656,7 @@ public class PlayerUI extends javax.swing.JFrame {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.recording == true) {
 					if (index == table.getSelectedRow()) {
-						jPanel3.removeVideoPlayback(monitor);
+						videoLayout.removeVideoPlayback(monitor);
 						break;
 					}
 					index++;
@@ -737,7 +669,7 @@ public class PlayerUI extends javax.swing.JFrame {
     
     private void enableButtons() {
     	boolean enabled = false;
-    	if (jPanel3.getComponentCount() > 0) {
+    	if (videoLayout.getComponentCount() > 0) {
     		enabled = true;
     	}
 		btnReplay10.setEnabled(enabled);
@@ -889,7 +821,7 @@ public class PlayerUI extends javax.swing.JFrame {
     		btnSeek.setEnabled(false);
     		spinnerPlaybackTime.setEnabled(false);
             cboDate.setEnabled(false);
-            jPanel3.removeVideoPlayback();
+            videoLayout.removeVideoPlayback();
     	} else if (mode == PlayMode.Playback) {
     		btnPlayback.setEnabled(false);
     		btnLive.setEnabled(true);
@@ -897,7 +829,7 @@ public class PlayerUI extends javax.swing.JFrame {
     		btnSeek.setEnabled(true);
     		spinnerPlaybackTime.setEnabled(true);
     		api.getVideoData(Calendar.getInstance().getTime());
-    		jPanel3.removeVideoStreams();
+    		videoLayout.removeVideoStreams();
     		
     	}
     	addMonitorsToList(api.getMonitors());
@@ -911,18 +843,13 @@ public class PlayerUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private JSpinner spinnerPlaybackTime,spinnerPlaybackSpeed,spinnerVolume;
     private JComboBox<String> cboDate;
-    private VideoLayout jPanel3;
+    public VideoLayout videoLayout;
     private javax.swing.JScrollPane jScrollPane1;
     private JTable table;
     private JToggleButton btnPause;
     private JButton btnVolume;
     private JButton btnSeek;
     private JToggleButton btnSpeed;
-    private JPopupMenu popupMenu;
-    private JMenuItem mntmAdd;
-    private JMenuItem mntmRemove;
-    private JMenuItem menuItem;
-    private JMenuItem mntmFullscreen;
     private JButton btnReplay10;
     private JButton btnReplay5;
     private JButton btnReplay30;
@@ -996,27 +923,5 @@ public class PlayerUI extends javax.swing.JFrame {
 		Live,
 		Playback
 	}
-	
-	
-	private static void addPopup(Component component, final JPopupMenu popup) {
-		component.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				if (e.isPopupTrigger()) {
-					showMenu(e);
-				}
-			}
-			public void mouseReleased(MouseEvent e) {
-				if (e.isPopupTrigger()) {
-					showMenu(e);
-				}
-			}
-			private void showMenu(MouseEvent e) {
-				popup.show(e.getComponent(), e.getX(), e.getY());
-			}
-		});
-	}
 
-	public void fullScreen(String mid) {
-		
-	}
 }

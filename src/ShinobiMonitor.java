@@ -31,6 +31,11 @@ public class ShinobiMonitor {
 	public boolean loadingVideos = false;
 	
 	public boolean recording = false;
+	
+	public TreeMap<String, ArrayList<MotionEvent>> motionEvents = new TreeMap<String, ArrayList<MotionEvent>>();
+	public TreeSet<String> motionDays = new TreeSet<String>(); // YYMMDD, if exists, motion exists on this day
+	public TreeSet<String> videoDays = new TreeSet<String>(); // YYMMDD, if exits, video exists on this day
+	
 	// key for videos will be YYYY-MM-DD
 	public TreeMap<String, ArrayList<ShinobiVideo>> videoPlaylist = new TreeMap<String, ArrayList<ShinobiVideo>>();
 		
@@ -230,7 +235,9 @@ public class ShinobiMonitor {
 			    	
 			    	String date = startTime.substring(0, startTime.indexOf("T"));
 			    	
-			    	System.out.println("Date="+date);
+			    	this.videoDays.add(date.substring(2,4)+""+date.substring(5,7)+""+date.substring(8,10));
+			    	
+			    	System.out.println("videoDaysSize="+videoDays.size());
 			    	
 			    	ShinobiVideo sv = new ShinobiVideo();
 			    	sv.startTime = sv.parseShinobiTime(startTime);

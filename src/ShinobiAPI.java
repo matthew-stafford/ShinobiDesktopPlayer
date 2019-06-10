@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeMap;
 
@@ -102,6 +104,73 @@ public class ShinobiAPI {
 		}
 				
 		return false;
+	}
+	
+	public void getMotionEventData(String monitorId, Date date) {
+		if (monitorId == null || monitorId.trim().length() < 1) {
+			return;
+		}
+		if (date == null ) {
+			return;
+		}
+		
+		
+		try {
+			String url = "/"+api_key+"/events/"+group_key+"/"+monitorId+"/2000";
+			
+			CloseableHttpClient httpclient = HttpClients.createDefault();
+			
+			System.out.println("Visiting "+host+url);
+			HttpGet httpGet = new HttpGet(host+url);
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd");
+			
+			CloseableHttpResponse response = httpclient.execute(httpGet);
+			try {
+			    System.out.println(response.getStatusLine());
+			    
+			    HttpEntity entity = response.getEntity();
+			    BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
+			    String json = "", line = null;
+			    while ((line = reader.readLine()) != null) {
+			    	json = json+line;
+			    }
+			    EntityUtils.consume(entity);
+			    			    
+			    // api key works, retrieve monitor data
+			    JsonElement jelement = new JsonParser().parse(json);
+			    JsonArray jarray = jelement.getAsJsonArray();
+			    for (JsonElement element : jarray) {
+			    	JsonObject monitor_data = element.getAsJsonObject();
+
+			    	MotionEvent me = new MotionEvent();
+			    	me.timeInMilliseconds = monitor_data.get("time").getAsLong();			    	
+			    	Date d = new Date(me.timeInMilliseconds);			    	
+			    	monitors.get(monitorId).motionDays.add(sdf.format(d));
+			    	
+			    	if (monitor_data.get("details").getAsJsonObject().isJsonObject()) {
+			    		me.confidence = monitor_data.get("details").getAsJsonObject().get("confidence").getAsByte();
+			    	}
+			    	if (monitors.get(monitorId).motionEvents.get(sdf.format(d)) == null) {
+			    		monitors.get(monitorId).motionEvents.put(sdf.format(d), new ArrayList<MotionEvent>());
+			    	}
+			    	
+			    	monitors.get(monitorId).motionEvents.get(sdf.format(d)).add(me);		    	
+			    	
+			    }			    	    
+			    
+			} finally {
+			    response.close();
+			}
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("EMSG="+e.getLocalizedMessage());
+			if (e.getLocalizedMessage().equals("No route to host (Host unreachable)")) {
+            	JOptionPane.showMessageDialog(null, "Could not establish connection to host. Check server is running and that your host string is correct.\n\nError: No route to host (Host unreachable)", "Error", JOptionPane.ERROR_MESSAGE);	
+			}
+		}
 	}
 	
 	public void getVideoData(Date date) {

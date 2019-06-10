@@ -121,8 +121,7 @@ public class VideoFrame extends JPanel implements Runnable {
 			}
 		});
 		
-		btnEvents = new JButton();
-		btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
+		
 		
 		if (PlayerUI.PLAY_MODE == PlayerUI.PlayMode.Playback) {
 			btnDownload = new JButton();
@@ -134,13 +133,23 @@ public class VideoFrame extends JPanel implements Runnable {
 					downloadCurrentFile();
 				}
 			});
+			
+			btnEvents = new JButton();
+			btnEvents.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-motion-detector-32.png")));
+			btnEvents.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					new EventsUI(vl.playerUI, monitor.mid).setVisible(true);
+				}
+			});
 		}
 		overlayPanel.setBackground(new Color(5,5,5));
 		overlayPanel.add(btnFull);
 		overlayPanel.add(btnRemove);
 		overlayPanel.add(btnMute);
-		overlayPanel.add(btnEvents);
 		if (PlayerUI.PLAY_MODE == PlayerUI.PlayMode.Playback) {
+			overlayPanel.add(btnEvents);
 			overlayPanel.add(btnDownload);
 		}
 		overlayPanel.add(btnPlay);
@@ -271,14 +280,15 @@ public class VideoFrame extends JPanel implements Runnable {
 			btnPlay.setBounds((buttonSize*0)+5,1,buttonSize,buttonSize);
 			btnPlay.setPreferredSize(new Dimension(buttonSize,buttonSize));
 			
-			btnEvents.setBounds((buttonSize*1)+5,1,buttonSize,buttonSize);
-			btnEvents.setPreferredSize(new Dimension(buttonSize,buttonSize));
-			
-			btnMute.setBounds((buttonSize*2)+5,1,buttonSize,buttonSize);
+			btnMute.setBounds((buttonSize*1)+5,1,buttonSize,buttonSize);
 			btnMute.setPreferredSize(new Dimension(buttonSize,buttonSize));
 			if (PlayerUI.PLAY_MODE == PlayerUI.PlayMode.Playback) {
 				btnDownload.setBounds((buttonSize*3)+5,1,buttonSize,buttonSize);
-				btnDownload.setPreferredSize(new Dimension(buttonSize,buttonSize));
+				btnDownload.setPreferredSize(new Dimension(buttonSize,buttonSize));				
+
+				btnEvents.setBounds((buttonSize*2)+5,1,buttonSize,buttonSize);
+				btnEvents.setPreferredSize(new Dimension(buttonSize,buttonSize));
+				
 			}
 			
 			btnFull.setBounds(getWidth()-(buttonSize*1)-5,1,buttonSize,buttonSize);
@@ -427,8 +437,10 @@ public class VideoFrame extends JPanel implements Runnable {
 					int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);					
 					
 					// ipc-server for controlling
-					// cache-secs dont want mpv to buffer too much otherwise network overhead will make it unstable with multiple videos since it will try to load entire files as fast as possible -start=+"+seekPos+" 
-					mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15 --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+					// cache-secs dont want mpv to buffer too much otherwise network overhead will make it unstable with multiple videos since it will try to load entire files as fast as possible
+					//mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15 --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+					mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+					
 					mpv.Start();
 					
 					// give mpv a chance to load
@@ -452,7 +464,7 @@ public class VideoFrame extends JPanel implements Runnable {
 					addFilesToPlaylist(videoPlaylist);						
 					
 					// reset seek position of file  --start has a bug where each subsequent file is opened at (i.e. 15:55pm 16:55pm 17:55pm etc)
-					loops = 0;
+					/*loops = 0;
 					while (true) {
 						try {
 							String result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"time-pos\", "+seekPos+"] }' | socat - /tmp/cctv_"+windowId),"error");
@@ -463,7 +475,7 @@ public class VideoFrame extends JPanel implements Runnable {
 						} catch (Exception e) {
 							
 						}
-					}
+					}*/
 					//mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"start\", \"none\"] }' | socat - /tmp/cctv_"+windowId);
 					System.out.println("Sent start cmd");
 					
@@ -500,7 +512,7 @@ public class VideoFrame extends JPanel implements Runnable {
 						System.out.println("result="+result);
 					} else {
 						// play new file 
-						System.out.println("Video file is different, requesting playlist pos move + seek");
+						/*System.out.println("Video file is different, requesting playlist pos move + seek");
 						String url = monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video;
 						System.out.println("Loading URL: "+url);
 						int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);
@@ -518,7 +530,40 @@ public class VideoFrame extends JPanel implements Runnable {
 							} catch (Exception e) {
 								
 							}
+						}*/
+						videoCanvas._status = videoCanvas._status.Loading;
+						videoCanvas.repaint();
+						
+						String url = monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video;
+						int playlistIndex = getPlaylistIndex(video);
+						
+						int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);
+						
+						mpv.kill();
+						mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+						
+						mpv.Start();
+						
+						// give mpv a chance to load
+						int loops = 0;
+						while (true) {
+							try {
+								loops++;
+								ArrayList<String> r = mpv.getPlaylist(mpv.sendCommand("echo '{ \"command\": [\"get_property\", \"playlist\"] }' | socat - /tmp/cctv_"+windowId));
+								if (r != null && r.size() > 0) {
+									break;
+								}
+								Thread.sleep(150);
+							} catch (InterruptedException e) {
+							}
 						}
+						
+						System.out.println("Loops="+loops);
+						// add rest of playlist to mpv
+						addFilesToPlaylist(videoPlaylist);						
+						
+						
+						// add rest of playlist to mpv
 					}
 				} else {
 					videoCanvas._status = videoCanvas._status.NoPlaybackVideo;
@@ -553,7 +598,8 @@ public class VideoFrame extends JPanel implements Runnable {
 			if (playlistData.contains(file)) {
 				System.out.println("playlist already contains url skipping="+file);
 			} else {
-				String ipcCommand = "echo '{ \"command\": [\"loadfile\", \""+file+"\", \"append\"] }' | socat - /tmp/cctv_"+windowId;
+				//String ipcCommand = "echo '{ \"command\": [\"loadfile\", \""+file+"\", \"append\"] }' | socat - /tmp/cctv_"+windowId;
+				String ipcCommand = "echo '{ \"command\": [\"loadfile\", \""+file+"\", \"append\", \"start=0\"] }' | socat - /tmp/cctv_"+windowId;
 				System.out.println(ipcCommand);
 				mpv.sendCommand(ipcCommand);
 			}

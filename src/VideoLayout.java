@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
 
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -26,7 +27,7 @@ public class VideoLayout extends JPanel {
 	private Layout currentLayout = Layout.LayoutGrid;
 	private PlayMode playMode = PlayMode.Live;
 	private ArrayList<String> windowIds = new ArrayList<String>();
-	
+	public PlayerUI playerUI;
 	
 	public enum Layout {
 		LayoutGrid
@@ -37,7 +38,8 @@ public class VideoLayout extends JPanel {
 		Playback
 	}
 	
-	public VideoLayout() {  
+	public VideoLayout(PlayerUI playerUI) {
+		this.playerUI = playerUI;
 		//capture mouse enter/exit events
 		long eventMask = AWTEvent.MOUSE_EVENT_MASK;
 
@@ -353,7 +355,16 @@ public class VideoLayout extends JPanel {
     
     public ArrayList<String> getWindowIds() {
 		ArrayList<String> ids = new ArrayList<String>();
-		String cmd = "xwininfo -all -name \""+PlayerUI.WINDOW_TITLE+"\" | grep sun-awt-X11-XCanvasPeer | awk '{print $1}'";
+		
+		
+		Random r = new Random();
+		
+		String original_window_title = playerUI.getTitle();
+		String temporary_window_title = original_window_title +r.nextInt(999999999);
+		
+		playerUI.setTitle(temporary_window_title);
+		
+		String cmd = "xwininfo -all -name \""+temporary_window_title+"\" | grep sun-awt-X11-XCanvasPeer | awk '{print $1}'";
 		System.out.println(cmd);
 		try {
             Process process = 
@@ -371,6 +382,9 @@ public class VideoLayout extends JPanel {
         } catch (Exception e) {
 	         e.printStackTrace();
         }
+		
+		playerUI.setTitle(original_window_title);
+		
 		return ids;
 	}
 
