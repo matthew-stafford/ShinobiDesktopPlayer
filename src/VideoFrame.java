@@ -439,7 +439,7 @@ public class VideoFrame extends JPanel implements Runnable {
 					// ipc-server for controlling
 					// cache-secs dont want mpv to buffer too much otherwise network overhead will make it unstable with multiple videos since it will try to load entire files as fast as possible
 					//mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15 --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
-					mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+					mpv = new MPVManager("mpv --idle=yes --keep-open=no --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
 					
 					mpv.Start();
 					
@@ -461,25 +461,10 @@ public class VideoFrame extends JPanel implements Runnable {
 					
 					
 					// add rest of playlist to mpv
-					addFilesToPlaylist(videoPlaylist);						
+					addFilesToPlaylist(videoPlaylist);				
 					
-					// reset seek position of file  --start has a bug where each subsequent file is opened at (i.e. 15:55pm 16:55pm 17:55pm etc)
-					/*loops = 0;
-					while (true) {
-						try {
-							String result = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"time-pos\", "+seekPos+"] }' | socat - /tmp/cctv_"+windowId),"error");
-							if (result.equalsIgnoreCase("success")) {
-								break;
-							}
-							Thread.sleep(100);
-						} catch (Exception e) {
-							
-						}
-					}*/
-					//mpv.sendCommand("echo '{ \"command\": [\"set_property\", \"start\", \"none\"] }' | socat - /tmp/cctv_"+windowId);
-					System.out.println("Sent start cmd");
+					// resume any settings set to file such as speed/volume/etc
 					
-					// monitor, time, windowId
 				} else {
 					// video unknown
 					videoCanvas._status = videoCanvas._status.NoPlaybackVideo;
@@ -540,7 +525,7 @@ public class VideoFrame extends JPanel implements Runnable {
 						int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);
 						
 						mpv.kill();
-						mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+						mpv = new MPVManager("mpv --idle=yes --keep-open=no --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
 						
 						mpv.Start();
 						
