@@ -41,9 +41,13 @@ import javax.swing.JInternalFrame;
 import javax.swing.JLayer;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
+import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.LayerUI;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 public class VideoFrame extends JPanel implements Runnable {
 
@@ -56,7 +60,7 @@ public class VideoFrame extends JPanel implements Runnable {
 	
 	
 	private JButton btnFull, btnRemove, btnMute, btnEvents, btnDownload, btnPlay;
-	
+	private JTextPane txtName;
 	private JPanel overlayPanel = new JPanel();
 	private boolean paused = false;
 	private boolean audio = false;
@@ -81,6 +85,17 @@ public class VideoFrame extends JPanel implements Runnable {
 				
 			}
 		});
+		
+		txtName = new JTextPane();
+		txtName.setText(monitor.name);
+		txtName.setBackground(Color.black);
+		txtName.setForeground(Color.white);
+		// center align text pane text
+		StyledDocument doc = txtName.getStyledDocument();
+		SimpleAttributeSet center = new SimpleAttributeSet();
+		StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
+		doc.setParagraphAttributes(0, doc.getLength(), center, false);
+
 		
 		btnPlay = new JButton();
 		btnPlay.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-pause-32.png")));
@@ -153,6 +168,7 @@ public class VideoFrame extends JPanel implements Runnable {
 			overlayPanel.add(btnDownload);
 		}
 		overlayPanel.add(btnPlay);
+		overlayPanel.add(txtName);
 		
         putClientProperty("JInternalFrame.isPalette", Boolean.TRUE);
        	
@@ -160,7 +176,7 @@ public class VideoFrame extends JPanel implements Runnable {
         setBounds(0,0,640,320);
         
 		// create canvas
-        videoCanvas = new VideoFrameCanvas(monitor.mid);
+        videoCanvas = new VideoFrameCanvas(monitor.mid, monitor.name);
 		videoCanvas.setSize(getWidth(),getHeight());	
 		videoCanvas.setIgnoreRepaint(false);
         		
@@ -282,13 +298,17 @@ public class VideoFrame extends JPanel implements Runnable {
 			
 			btnMute.setBounds((buttonSize*1)+5,1,buttonSize,buttonSize);
 			btnMute.setPreferredSize(new Dimension(buttonSize,buttonSize));
-			if (PlayerUI.PLAY_MODE == PlayerUI.PlayMode.Playback) {
-				btnDownload.setBounds((buttonSize*3)+5,1,buttonSize,buttonSize);
-				btnDownload.setPreferredSize(new Dimension(buttonSize,buttonSize));				
+			if (PlayerUI.PLAY_MODE == PlayerUI.PlayMode.Playback) {	
 
 				btnEvents.setBounds((buttonSize*2)+5,1,buttonSize,buttonSize);
 				btnEvents.setPreferredSize(new Dimension(buttonSize,buttonSize));
 				
+				btnDownload.setBounds((buttonSize*3)+5,1,buttonSize,buttonSize);
+				btnDownload.setPreferredSize(new Dimension(buttonSize,buttonSize));			
+				
+				txtName.setBounds((buttonSize*4)+5,6,getWidth()-((buttonSize*2)+10), buttonSize);
+			} else {
+				txtName.setBounds((buttonSize*2)+10,6,getWidth()-((buttonSize*4)+10), buttonSize);
 			}
 			
 			btnFull.setBounds(getWidth()-(buttonSize*1)-5,1,buttonSize,buttonSize);
@@ -302,10 +322,14 @@ public class VideoFrame extends JPanel implements Runnable {
 		}
 	}
 	
+	/**
+	 * --demuxer-readahead-secs=0.1 && --cache-secs=0.1 (fixes some streams from having issues where they freeze and then speed up once cache is filled)
+	 * 
+	 */
 	public void playStream() {
 		if (mpv == null) {
 			if (windowId != null && monitor != null && monitor.stream != null) {
-				mpv = new MPVManager("mpv --no-osc --input-ipc-server=/tmp/cctv_"+windowId+" --speed=1.01 --cache-secs=10  --volume 0 -wid "+windowId+" "+monitor.stream);
+				mpv = new MPVManager("mpv --no-osc --profile=low-latency --cache-secs=0.1 --demuxer-readahead-secs=0.1 --input-ipc-server=/tmp/cctv_"+windowId+" --speed=1.01 --no-cache  --volume 0 -wid "+windowId+" "+monitor.stream);
 				mpv.Start();
 			} else {
 				System.out.println("Null found on WindowId="+windowId+", monitor.stream="+monitor.stream);
@@ -345,7 +369,7 @@ public class VideoFrame extends JPanel implements Runnable {
 		    try {
 		    	String videoBeingPlayed = mpv.getValueFromResult(mpv.sendCommand("echo '{ \"command\": [\"get_property\", \"filename\"] }' | socat - /tmp/cctv_"+windowId),"data");
 				System.out.println("video="+videoBeingPlayed);
-				Desktop.getDesktop().browse(new URI(monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+videoBeingPlayed));
+				Desktop.getDesktop().browse(new URI(monitor.site.getBaseURL()+"/"+monitor.site.apiKey+"/videos/"+monitor.site.groupKey+"/"+monitor.mid+"/"+videoBeingPlayed));
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (URISyntaxException e) {
@@ -443,7 +467,7 @@ public class VideoFrame extends JPanel implements Runnable {
 					// ipc-server for controlling
 					// cache-secs dont want mpv to buffer too much otherwise network overhead will make it unstable with multiple videos since it will try to load entire files as fast as possible
 					//mpv = new MPVManager("mpv --idle=yes --keep-open=no --reset-on-next-file=all --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15 --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
-					mpv = new MPVManager("mpv --idle=yes --keep-open=no --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+					mpv = new MPVManager("mpv --idle=yes --keep-open=no --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.site.getBaseURL()+"/"+monitor.site.apiKey+"/videos/"+monitor.site.groupKey+"/"+monitor.mid+"/"+video);
 					
 					mpv.Start();
 					
@@ -511,13 +535,13 @@ public class VideoFrame extends JPanel implements Runnable {
 						System.out.println("result="+result);
 					} else {
 						// play new file 						
-						String url = monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video;
+						String url = monitor.site.getBaseURL()+"/"+monitor.site.apiKey+"/videos/"+monitor.site.groupKey+"/"+monitor.mid+"/"+video;
 						int playlistIndex = getPlaylistIndex(video);
 						
 						int seekPos = monitor.getVideoFileSeekPos(time, videoIndex);
 						
 						mpv.kill();
-						mpv = new MPVManager("mpv --idle=yes --keep-open=no --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.host+"/"+monitor.api_key+"/videos/"+monitor.group_key+"/"+monitor.mid+"/"+video);
+						mpv = new MPVManager("mpv --idle=yes --keep-open=no --prefetch-playlist=yes --input-ipc-server=/tmp/cctv_"+windowId+" --cache-secs=15  --start="+seekPos+" --profile=low-latency --wid "+windowId+" "+monitor.site.getBaseURL()+"/"+monitor.site.apiKey+"/videos/"+monitor.site.groupKey+"/"+monitor.mid+"/"+video);
 						
 						mpv.Start();
 						
@@ -587,7 +611,7 @@ public class VideoFrame extends JPanel implements Runnable {
 		
 		// add all urls which are not already in playlistData
 		for (String url : videoPlaylist) {
-			String file = monitor.host+url;
+			String file = monitor.site.getBaseURL()+url;
 			if (playlistData.contains(file)) {
 				System.out.println("playlist already contains url skipping="+file);
 			} else {

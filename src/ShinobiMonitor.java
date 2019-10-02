@@ -24,9 +24,7 @@ public class ShinobiMonitor {
 	public String mid;
 	public String name;
 	public String stream;
-	public String api_key;
-	public String group_key;
-	public String host;
+	public ShinobiSite site;
 	public Date todaysPreviousVideoGetTimestamp = null; // if null, get all, else get from this variable to current time
 	public boolean loadingVideos = false;
 	
@@ -39,6 +37,10 @@ public class ShinobiMonitor {
 	// key for videos will be YYYY-MM-DD
 	public TreeMap<String, ArrayList<ShinobiVideo>> videoPlaylist = new TreeMap<String, ArrayList<ShinobiVideo>>();
 		
+	public ShinobiMonitor(ShinobiSite site) {
+		this.site = site;
+	}
+	
 	@Override
 	public String toString() {
 		return "ShinobiMonitor [mid=" + mid + ", name=" + name + ", stream=" + stream + "]";
@@ -203,12 +205,12 @@ public class ShinobiMonitor {
 			SimpleDateFormat shinobiFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		
 			
-			String url = "/"+api_key+"/videos/"+group_key+"/"+mid+"?start="+shinobiFormat.format(startDate)+"&end="+shinobiFormat.format(endDate);
+			String url = site.getBaseURL()+"/"+site.apiKey+"/videos/"+site.groupKey+"/"+mid+"?start="+shinobiFormat.format(startDate)+"&end="+shinobiFormat.format(endDate);
 			
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			
-			System.out.println("Visiting "+host+url);
-			HttpGet httpGet = new HttpGet(host+url);
+			System.out.println("Visiting "+url);
+			HttpGet httpGet = new HttpGet(url);
 			
 			CloseableHttpResponse response = httpclient.execute(httpGet);
 			try {

@@ -92,13 +92,14 @@ public class EventsUI extends JFrame {
 		
 		cboMonitors = new JComboBox<String>();
 		cboMonitors.setBounds(0, 5, 302, 24);
+		/*
 		for (ShinobiMonitor monitor : playerUI.api.getMonitors().values()) {
 			cboMonitors.addItem(monitor.name);
 			if (defaultMonitorId != null && defaultMonitorId.equals(monitor.mid)) {
 				cboMonitors.setSelectedItem(monitor.name);
 			}
 		}
-		
+		*/
 		
 		
 		panel.add(cboMonitors);
@@ -161,13 +162,17 @@ public class EventsUI extends JFrame {
 	}
 	
 	public void getEventData(Date date) {
+	/*
 		ShinobiMonitor monitor = (ShinobiMonitor) playerUI.api.getMonitors().values().toArray()[cboMonitors.getSelectedIndex()];
 		
-		SimpleDateFormat key = new SimpleDateFormat("yyMMdd");
+
+		SimpleDateFormat key = new SimpleDateFormat("yyMMdd");		
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		
-		playerUI.api.getMotionEventData(monitor.mid, date);	
+		int limit = 2000;
+		
+		playerUI.api.getMotionEventData(monitor.mid, date, limit);	
 		
 		Object[][] cellData = new Object[monitor.motionEvents.get(key.format(date)).size()][2];
 		int row = 0;
@@ -250,5 +255,6 @@ public class EventsUI extends JFrame {
 				
 			}
 		});
+		*/
 	}
 }

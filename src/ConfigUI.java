@@ -17,24 +17,28 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
 
-public class ConfigUI extends JDialog {
+public class ConfigUI extends JFrame {
 
 	private JPanel contentPane;
-	private JTextPane txtHost, txtApiKey, txtGroupKey;
+	private JTextPane txtHost, txtApiKey, txtGroupKey, txtName, txtPort;
 	private JLabel lblHost, lblApiKey, lblGroupKey;
 	private JButton btnCancel, btnSave;
+	private JComboBox<Boolean> cboHttps;
+	
 	
 	String host, apikey,groupkey;
 
 	public ConfigUI(String host, String apikey, String groupkey) {
+		setResizable(false);
 		this.host = host;
 		this.apikey = apikey;
 		this.groupkey = groupkey;
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setModalityType(ModalityType.APPLICATION_MODAL);
-		setBounds(100, 100, 800, 200);
+		setBounds(100, 100, 460, 270);
 		setTitle("Please enter Shinobi Configuration");
 		
 		contentPane = new JPanel();
@@ -42,12 +46,12 @@ public class ConfigUI extends JDialog {
 		contentPane.setLayout(null);
 	
 		lblHost = new JLabel();
-		lblHost.setBounds(15, 15, 80, 20);
+		lblHost.setBounds(15, 29, 80, 20);
 		lblHost.setText("Host:");
 		
 		txtHost = new JTextPane();
 		txtHost.setText(host);
-		txtHost.setBounds(110, 15, getWidth()-120, 20);
+		txtHost.setBounds(113, 29, 322, 20);
 		txtHost.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -69,12 +73,12 @@ public class ConfigUI extends JDialog {
 		});
 		
 		lblApiKey = new JLabel();
-		lblApiKey.setBounds(15, 45, 80, 20);
+		lblApiKey.setBounds(15, 127, 80, 20);
 		lblApiKey.setText("API Key:");
 		
 		txtApiKey = new JTextPane();
 		txtApiKey.setText(apikey);
-		txtApiKey.setBounds(110, 45, getWidth()-120, 20);
+		txtApiKey.setBounds(113, 127, 322, 20);
 		txtApiKey.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -97,12 +101,12 @@ public class ConfigUI extends JDialog {
 		});
 		
 		lblGroupKey = new JLabel();
-		lblGroupKey.setBounds(15, 75, 80, 20);
+		lblGroupKey.setBounds(15, 159, 80, 20);
 		lblGroupKey.setText("Group Key:");
 		
 		txtGroupKey = new JTextPane();
 		txtGroupKey.setText(groupkey);
-		txtGroupKey.setBounds(110, 75, getWidth()-120, 20);
+		txtGroupKey.setBounds(113, 159, 325, 20);
 		txtGroupKey.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -124,7 +128,7 @@ public class ConfigUI extends JDialog {
 		});
 		
 		btnSave = new JButton("Save");
-		btnSave.setBounds(getWidth()-120, 115, 110, 30);
+		btnSave.setBounds(325, 191, 110, 30);
 		btnSave.addActionListener(new ActionListener() {
 			
 			@Override
@@ -158,7 +162,7 @@ public class ConfigUI extends JDialog {
 			}
 		});
 		btnCancel = new JButton("Cancel");
-		btnCancel.setBounds(getWidth()-240, 115, 110, 30);
+		btnCancel.setBounds(15, 191, 110, 30);
 		btnCancel.addActionListener(new ActionListener() {
 			
 			@Override
@@ -179,6 +183,41 @@ public class ConfigUI extends JDialog {
 		updateUI();
 		
 		setContentPane(contentPane);
+		
+		txtPort = new JTextPane();
+		txtPort.setText("<dynamic>");
+		txtPort.setBounds(113, 61, 80, 20);
+		contentPane.add(txtPort);
+		
+		JLabel lblPort = new JLabel();
+		lblPort.setText("Port:");
+		lblPort.setBounds(15, 61, 80, 20);
+		contentPane.add(lblPort);
+		
+		JLabel lblHttps = new JLabel();
+		lblHttps.setText("HTTPS?");
+		lblHttps.setBounds(15, 95, 80, 20);
+		contentPane.add(lblHttps);
+		
+		cboHttps = new JComboBox<Boolean>();
+		cboHttps.setModel(new DefaultComboBoxModel(new String[] {"Yes", "No"}));
+		cboHttps.setSelectedIndex(1);
+		cboHttps.setBounds(113, 93, 80, 24);
+		contentPane.add(cboHttps);
+		
+		JLabel lblName = new JLabel();
+		lblName.setText("Name:");
+		lblName.setBounds(15, 0, 80, 20);
+		contentPane.add(lblName);
+		
+		txtName = new JTextPane();
+		txtName.setText("<dynamic>");
+		txtName.setBounds(113, 0, 322, 20);
+		contentPane.add(txtName);
+	}
+
+	public ConfigUI() {
+		// TODO Auto-generated constructor stub
 	}
 
 	private void updateUI() {
@@ -200,5 +239,4 @@ public class ConfigUI extends JDialog {
 		}
 		return false;
 	}
-	
 }

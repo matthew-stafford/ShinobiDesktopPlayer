@@ -13,10 +13,11 @@ public class VideoFrameCanvas extends Canvas {
 		Loading, NoVideo, NoPlaybackVideo, ErrorMpv
 	}
 	
-	public String mid;
+	public String mid, name;	
 	public status _status = status.Loading;
-	public VideoFrameCanvas(String mid) {
+	public VideoFrameCanvas(String mid, String name) {
 		this.mid = mid;
+		this.name = name;
 	}
 
 	public void paint(Graphics g) {
@@ -26,10 +27,15 @@ public class VideoFrameCanvas extends Canvas {
          g2.fillRect(0, 0, getWidth(), getHeight());         
          g2.setColor(Color.WHITE);
          
-         Font myFont = new Font("Serif", Font.ITALIC | Font.BOLD, 24);
+         int fontSize = 24;
+         
+         Font myFont = new Font("Serif", Font.ITALIC | Font.BOLD, fontSize);
+         
+
+    	 drawCenteredString(g2, name, new Rectangle(0,0, getWidth(),getHeight()-((fontSize*2)+5)), myFont);
          
          if (_status == status.Loading) {
-        	 drawCenteredString(g2, "LOADING...", new Rectangle(0,0, getWidth(),getHeight()), myFont);
+        	 drawCenteredString(g2, "Loading..", new Rectangle(0,0, getWidth(),getHeight()), myFont);
          } else if (_status == status.NoVideo) {
         	 drawCenteredString(g2, "NO VIDEO",new Rectangle(0,0, getWidth(),getHeight()), myFont);        	 
          } else if (_status == status.NoPlaybackVideo) {

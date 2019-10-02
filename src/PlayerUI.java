@@ -11,11 +11,17 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
@@ -44,11 +50,23 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.DateFormatter;
 import javax.swing.text.NumberFormatter;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+
+import org.ini4j.Profile.Section;
+import org.ini4j.Wini;
+
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.SwingConstants;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 
 
 
@@ -65,16 +83,25 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static PlayMode PLAY_MODE = PlayMode.Live;
 	public static String host;
 	public static String apiKey;
+	public static String windowTitle = "Shinobi Desktop Player";
 	public static String groupKey;
 
+
+	public ArrayList<ShinobiSite> sites = new ArrayList<ShinobiSite>();
+	
 	public static int GLOBAL_VOLUME = 100;
 	
 	public boolean audio = false;
 	public boolean speed = false;
 	public boolean paused = false;
 
+	private JTree tree;
+	
     public PlayerUI() {
-    	    	    	
+    	
+    	// load sites
+    	this.windowTitle = generateWindowTitle();
+    	
     	addWindowListener(new WindowListener() {
 			
 			@Override
@@ -101,19 +128,16 @@ public class PlayerUI extends javax.swing.JFrame {
 			
 			@Override
 			public void windowClosed(WindowEvent e) {
-				// TODO Auto-generated method stub
 				
 			}
 			
 			@Override
 			public void windowActivated(WindowEvent e) {
-				// TODO Auto-generated method stub
 				
 			}
 		});
     	
         jPanel1 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
         btnLive = new javax.swing.JButton();
         btnLive.setToolTipText("Live");
         btnLive.setEnabled(false);
@@ -145,13 +169,13 @@ public class PlayerUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        setTitle("Shinobi Desktop Player");
+        setTitle(windowTitle);
 
         jPanel1.setBackground(UIManager.getColor("Button.background"));
 
         jLabel1.setText("Playback Mode");
 
-        jLabel3.setText("Sources");
+        jLabel3.setText("Sites / Monitors");
         
         btnSettings = new JButton("");
         btnSettings.setEnabled(true);
@@ -183,17 +207,17 @@ public class PlayerUI extends javax.swing.JFrame {
         	}
         });
         
+        JScrollPane scrollPane = new JScrollPane();
+        
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1Layout.setHorizontalGroup(
         	jPanel1Layout.createParallelGroup(Alignment.LEADING)
         		.addGroup(jPanel1Layout.createSequentialGroup()
         			.addContainerGap()
         			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
-        				.addGroup(jPanel1Layout.createSequentialGroup()
-        					.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
-        					.addContainerGap())
-        				.addComponent(jLabel1, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
-        				.addGroup(jPanel1Layout.createSequentialGroup()
+        				.addComponent(scrollPane, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
+        				.addComponent(jLabel1, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
+        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
         					.addGap(3)
         					.addComponent(btnLive, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
         					.addPreferredGap(ComponentPlacement.RELATED)
@@ -202,14 +226,14 @@ public class PlayerUI extends javax.swing.JFrame {
         					.addComponent(btnSettings, GroupLayout.PREFERRED_SIZE, 56, GroupLayout.PREFERRED_SIZE)
         					.addContainerGap())
         				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-        					.addComponent(spinnerPlaybackTime, GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
+        					.addComponent(spinnerPlaybackTime, GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)
         					.addPreferredGap(ComponentPlacement.RELATED)
         					.addComponent(btnSeek)
         					.addContainerGap())
-        				.addGroup(jPanel1Layout.createSequentialGroup()
+        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
         					.addComponent(cboDate, 0, 249, Short.MAX_VALUE)
         					.addContainerGap())
-        				.addGroup(jPanel1Layout.createSequentialGroup()
+        				.addGroup(Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
         					.addComponent(jLabel3, GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
         					.addContainerGap())))
         );
@@ -229,61 +253,80 @@ public class PlayerUI extends javax.swing.JFrame {
         			.addPreferredGap(ComponentPlacement.RELATED)
         			.addComponent(jLabel3, GroupLayout.PREFERRED_SIZE, 15, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.RELATED)
-        			.addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 784, Short.MAX_VALUE)
-        			.addPreferredGap(ComponentPlacement.RELATED)
+        			.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 766, Short.MAX_VALUE)
+        			.addPreferredGap(ComponentPlacement.UNRELATED)
         			.addComponent(cboDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         			.addPreferredGap(ComponentPlacement.UNRELATED)
         			.addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING, false)
-        				.addComponent(spinnerPlaybackTime)
+        				.addComponent(spinnerPlaybackTime, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
         				.addComponent(btnSeek, GroupLayout.PREFERRED_SIZE, 40, Short.MAX_VALUE))
         			.addContainerGap())
         );
         
-        table = new JTable() {
-        	   private static final long serialVersionUID = 1L;
-
-               @Override
-			public boolean isCellEditable(int row, int column) {                
-                       return false;               
-               };
-        };
-        table.addMouseListener(new MouseListener() {
+        tree = new JTree();
+        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        tree.setShowsRootHandles(false);
+        
+        tree.addMouseListener(new MouseListener() {
 			
 			@Override
-			public void mouseReleased(MouseEvent e) {
-				// TODO Auto-generated method stub
+			public void mouseReleased(MouseEvent arg0) {
 				
 			}
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
+				int selRow = tree.getRowForLocation(e.getX(), e.getY());
+		        TreePath selPath = tree.getPathForLocation(e.getX(), e.getY());
+		        if (selPath != null && selPath.getPathCount() == 3) {
+			        if(selRow != -1) {
+			            if(e.getClickCount() == 1) {
+			                //mySingleClick(selRow, selPath);
+			            }
+			            else if(e.getClickCount() == 2) {
+			            	// get monitor 
+			 			    ShinobiMonitor monitor = getSelectedMonitorFromTree();			 			    
+			 			    // and add to layout
+			 			    addSelectedVideoToLayout(monitor);
+			            }
+			        }
+		        }
 				
 			}
 			
 			@Override
-			public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
+			public void mouseExited(MouseEvent arg0) {
 				
 			}
 			
 			@Override
-			public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
+			public void mouseEntered(MouseEvent arg0) {
 				
 			}
 			
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				JTable table =(JTable) e.getSource();
-				if (e.getClickCount() == 2 && table.getSelectedRow() != -1) {
-					addSelectedVideoToLayout();
-		        }				
+			public void mouseClicked(MouseEvent arg0) {
+				
 			}
 		});
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);        
-        table.setFillsViewportHeight(true);
-        jScrollPane1.setViewportView(table);
+        tree.addTreeSelectionListener(new TreeSelectionListener() {
+			
+			@Override
+			public void valueChanged(TreeSelectionEvent arg0) {
+			    DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+
+			    if (node == null)
+			    //Nothing is selected.  
+			    return;
+
+			    Object nodeInfo = node.getUserObject();
+
+			    System.out.println("Hello "+nodeInfo);
+			}
+		});
+        scrollPane.setViewportView(tree);
+        
+        
         jPanel1.setLayout(jPanel1Layout);
     
         
@@ -573,8 +616,136 @@ public class PlayerUI extends javax.swing.JFrame {
         
         ToolTipManager.sharedInstance().setInitialDelay(0);
     }
+    
+    private ShinobiMonitor getSelectedMonitorFromTree() {
+    	DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+    	if (node == null) {
+	    	return null;
+	    } else {
+	    	String monitor = (String) node.getUserObject();
+	    	
+	    	ShinobiSite site = getSelectedSiteFromTree();
+	    	if (site != null) {
+	    		for (ShinobiMonitor m : site.getMonitors().values()) {
+	    			if (m.name.equalsIgnoreCase(monitor)) {
+	    				return m;
+	    			}
+	    		}
+	    			
+	    	}
+	    }
+    	return null;
+    }
+    
+    private ShinobiSite getSelectedSiteFromTree() {
+    	DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+    	
+    	//Nothing is selected.  
+	    if (node == null) {
+	    	return null;
+	    } else if (node.getParent() == null) {
+	    	return null;
+	    } else {
+	    	DefaultMutableTreeNode parent = (DefaultMutableTreeNode) node.getParent();
+	    	for (ShinobiSite site : sites) {
+	    		if (parent.getUserObject().toString().toLowerCase().equals(site.name.toLowerCase())) {
+	    			return site;
+	    		}
+	    	}
+	    }
+	    return null;
+    }
 
-    protected void updateVolumeButton() {
+    private DefaultMutableTreeNode createSiteTree() {
+    	
+    	DefaultMutableTreeNode root = new DefaultMutableTreeNode("Sites");
+        
+    	for (ShinobiSite s : sites) {
+    		DefaultMutableTreeNode site = new DefaultMutableTreeNode(s.name);
+    		// add monitors for site 
+    		ArrayList<String> orderedNames = new ArrayList<String>(s.getMonitors().size());
+    		for (ShinobiMonitor m : s.getMonitors().values()) {
+    			// alphabet sort
+    			if (PLAY_MODE == PlayMode.Live) {
+    				if (m.stream != null && m.stream.length() > 0) {
+    					orderedNames.add(m.name);
+    				}
+    			} else {
+    				if (m.recording) {
+    					orderedNames.add(m.name);
+    				}
+    			}
+    		}
+    		Collections.sort(orderedNames);
+    		
+    		for (String name : orderedNames) {
+
+    			site.add(new DefaultMutableTreeNode(name));
+    		}
+    		
+    		root.add(site);
+    	}
+
+        DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
+        model.setRoot(root);
+    	tree.setModel(model);
+    	for (int i = 0; i < tree.getRowCount(); i++) {
+    	    tree.expandRow(i);
+    	}
+    	
+    	return root;
+	}
+
+	/**
+     * Generate a unique window title if default is already taken
+     * @return name of the window title
+     */
+    private String generateWindowTitle() {
+    	// count instances of Shinobi Desktop Player already created and add one 
+    	
+    	int instanceId = 1;
+    	String windowTitle = "Shinobi Desktop Player <1>";
+    	while (windowTitleExists(windowTitle)) {
+    		
+    		instanceId++;
+    		windowTitle = "Shinobi Desktop Player <"+instanceId+">";
+    	}
+		return windowTitle;
+	}
+    
+    /**
+     * Check if an existing window has this name already
+     * @param windowTitle - title of the window to look for
+     * @return 
+     */
+    private boolean windowTitleExists(String windowTitle) {
+    	String cmd = "xwininfo -root -tree | grep -c \""+windowTitle+"\"";
+    	System.out.println("Executing shell command: "+cmd);
+    	try {
+			Process process = 
+                new ProcessBuilder(new String[] {"bash", "-c", cmd})
+                    .redirectErrorStream(true)
+                    .start();
+
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+            String line = null;
+            
+				while ( (line = br.readLine()) != null ) {
+					System.out.println("Shell returned: "+line);
+				    if (line.equalsIgnoreCase("0")) {
+				    	return false;
+				    } else {
+				    	return true;
+				    }
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	return false;
+    }
+
+	protected void updateVolumeButton() {
 		if (audio == true) {
 			
 			if ((Integer) spinnerVolume.getValue() > 0) {
@@ -589,7 +760,8 @@ public class PlayerUI extends javax.swing.JFrame {
 	}
 
 	protected void toggleFullScreenForSelectedMonitor() {
-    	int index = 0;
+    	/*
+		int index = 0;
     	if (PLAY_MODE  == PlayMode.Live) {
 			for (ShinobiMonitor monitor : api.getMonitors().values()) {
 				if (monitor.stream != null && monitor.stream.length() > 0) {
@@ -611,59 +783,38 @@ public class PlayerUI extends javax.swing.JFrame {
 				}
 			}	
 		}
+		*/
 	}
 
-	public void addSelectedVideoToLayout() {
-    	int index = 0;
+	public void addSelectedVideoToLayout(ShinobiMonitor monitor) {
+    
     	if (PLAY_MODE  == PlayMode.Live) {
-			for (ShinobiMonitor monitor : api.getMonitors().values()) {
-				if (monitor.stream != null && monitor.stream.length() > 0) {
-					if (index == table.getSelectedRow()) {
-						videoLayout.addVideoStream(monitor);
-						break;
-					}
-					index++;
-				}
-			}			
+			if (monitor.stream != null && monitor.stream.length() > 0) {
+				videoLayout.addVideoStream(monitor);
+			}
+			
 		} else if (PLAY_MODE == PlayMode.Playback) {
-			for (ShinobiMonitor monitor : api.getMonitors().values()) {
-				if (monitor.recording == true) {
-					if (index == table.getSelectedRow()) {
-						videoLayout.addVideoPlayback(monitor, getDateFromSpinnerAndComboBox());
-						break;
-					}
-					index++;
-				}
-			}	
+			if (monitor.recording == true) {
+				videoLayout.addVideoPlayback(monitor, getDateFromSpinnerAndComboBox());
+			}
 		}
     	
     	enableButtons();
     }
     
-    public void removeSelectedVideoFromLayout() {
-    	int index = 0;
+    public void removeSelectedVideoFromLayout(ShinobiMonitor monitor) {
+
     	if (PLAY_MODE  == PlayMode.Live) {
-			for (ShinobiMonitor monitor : api.getMonitors().values()) {
-				if (monitor.stream != null && monitor.stream.length() > 0) {
-					if (index == table.getSelectedRow()) {
-						videoLayout.removeVideoStream(monitor);
-						break;
-					}
-					index++;
-				}
+			if (monitor.stream != null && monitor.stream.length() > 0) {
+				videoLayout.removeVideoStream(monitor);				
 			}			
 		} else if (PLAY_MODE == PlayMode.Playback) {
-			for (ShinobiMonitor monitor : api.getMonitors().values()) {
-				if (monitor.recording == true) {
-					if (index == table.getSelectedRow()) {
-						videoLayout.removeVideoPlayback(monitor);
-						break;
-					}
-					index++;
-				}
-			}	
-		}
-    	
+			if (monitor.recording == true) {
+				videoLayout.removeVideoPlayback(monitor);
+			}
+			
+		}    	
+			
     	enableButtons();
     }
     
@@ -719,11 +870,7 @@ public class PlayerUI extends javax.swing.JFrame {
     	
     	return new Date();
     }
-    
-    public void initShinobi() {
-        addMonitorsToList(api.getMonitors());
-    }
-    
+        
     public static void loadProperties() {
     	
     }
@@ -738,77 +885,48 @@ public class PlayerUI extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
 			public void run() {
+            	PlayerUI ui = new PlayerUI();
+
+                ui.setVisible(true);
             	try {
-            		// load host & apikey
-            		String rootPath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
-            		String appConfigPath = rootPath + "shinobidesktopplayer.properties";
-            		
-            		File file = new File(appConfigPath);
-            		if (!file.exists()) 
-            			file.createNewFile();
-            		
-            		Properties appProps = new Properties();
-            		appProps.load(new FileInputStream(appConfigPath));
-            		
-                	host = appProps.getProperty("host");
-                	apiKey = appProps.getProperty("api_key");
-                	groupKey = appProps.getProperty("group_key");
-                	
-                	System.out.println("Host: "+host);
-                	System.out.println("API: "+apiKey);
-                	System.out.println("GroupKey: "+groupKey);
-                	
-                	boolean valid = true;
-                	if (host == null || host.trim().length() < 6) {
-                        valid = false;
-                	} 
-                	
-                	if (apiKey == null || apiKey.trim().length() < 10) {
-                	    valid = false;
-                	} 
-                	
-                	if (groupKey == null || groupKey.trim().length() < 1) {
-                	    valid = false;
-                	} 
-                	
-                	
-                	
-                	if (!valid) {
-                		System.out.println("Ini not configured, exiting");
-                		ConfigUI cfg = new ConfigUI(host,apiKey,groupKey);
-                		cfg.setVisible(true);
-                		                		
-                	} else {
-                		System.out.println("Everything looks ok, continuing");
-                	}
-                	
-                	// tidy trailing / from host if there
-                	if (host.endsWith("/")) {
-            			host = host.substring(0, host.length()-1);
+            		// check if sites.ini exists
+            		try {
+            			// load existing sites.ini if exists
+            			Wini ini = new Wini(new File("sites.ini"));
+            			for (String s : ini.keySet()) {
+            				ShinobiSite site = new ShinobiSite();
+            				site.apiKey = ini.get(s, "apikey");
+            				site.groupKey = ini.get(s, "groupkey");
+            				site.host = ini.get(s, "host");
+            				site.name = ini.get(s, "name");
+            				site.port = Integer.parseInt(ini.get(s, "port"));
+            				site.https = Boolean.parseBoolean(ini.get(s, "https"));
+            				
+            				ui.sites.add(site);
+            			}
+            		} catch (Exception e) {
+            			if (e.getMessage() != null && e.getMessage().toLowerCase().contains("no such file")) {
+                			JOptionPane.showMessageDialog(null, e.getMessage());
+            			}
+            			
+            			// load popup for user to create first sites.ini file
+            			SettingsUI settings = new SettingsUI(ui);
+            			settings.setVisible(true);
             		}
                 	
-                	// start creating UI
-                	// check API is valid
-                	PlayerUI ui = null;
-                    boolean apiValid =false;
-                    while (!apiValid) {
-                    	ui = new PlayerUI();
-                        ui.api = new ShinobiAPI(apiKey, host, groupKey);
-	                    if (!ui.api.checkAPIValidAndGetMonitors()) {
-	                    	JOptionPane.showMessageDialog(null, "API Key is invalid.", "Error", JOptionPane.ERROR_MESSAGE);	
-	                    	ConfigUI cfg = new ConfigUI(host,apiKey,groupKey);
-	                		cfg.setVisible(true);
-	                    } else {
-	                    	apiValid = true;
-	                    }
-                    }
-                	ui.initShinobi();
-                    ui.setVisible(true);
+                	System.out.println("Sites loaded: "+ui.sites.size());
+
             	} catch (Exception e) {
             		e.printStackTrace();
             	}
             	
-
+            	// load all sites monitors
+            	for (ShinobiSite site: ui.sites) {
+            		site.loadMonitors();
+            	}
+            	// create monitor tree
+            	ui.createSiteTree();
+            	
             }
         });
     }
@@ -828,11 +946,10 @@ public class PlayerUI extends javax.swing.JFrame {
     		cboDate.setEnabled(true);
     		btnSeek.setEnabled(true);
     		spinnerPlaybackTime.setEnabled(true);
-    		api.getVideoData(Calendar.getInstance().getTime());
     		videoLayout.removeVideoStreams();
     		
     	}
-    	addMonitorsToList(api.getMonitors());
+    	createSiteTree();
     }
 
     private javax.swing.JButton btnLive;
@@ -844,8 +961,6 @@ public class PlayerUI extends javax.swing.JFrame {
     private JSpinner spinnerPlaybackTime,spinnerPlaybackSpeed,spinnerVolume;
     private JComboBox<String> cboDate;
     public VideoLayout videoLayout;
-    private javax.swing.JScrollPane jScrollPane1;
-    private JTable table;
     private JToggleButton btnPause;
     private JButton btnVolume;
     private JButton btnSeek;
@@ -858,60 +973,6 @@ public class PlayerUI extends javax.swing.JFrame {
     private JButton btnForward30;
     private JButton btnDownload;
     private JButton btnSettings;
-
-	private void addMonitorsToList(TreeMap<String, ShinobiMonitor> monitors) {
-		
-		Object[][] cellData = new Object[monitors.size()][2];
-		int row = 0;
-		int size = 0;
-		if (PLAY_MODE  == PlayMode.Live) {
-			for (ShinobiMonitor monitor : monitors.values()) {
-				if (monitor.stream != null && monitor.stream.length() > 0) {
-					size++;
-				}
-			}
-			cellData = new Object[size][2];
-			for (ShinobiMonitor monitor : monitors.values()) {
-				if (monitor.stream != null && monitor.stream.length() > 0) {
-					cellData[row][0] = monitor.name;
-					cellData[row++][1] = monitor.mid;
-				}
-			}			
-		} else if (PLAY_MODE == PlayMode.Playback) {
-			for (ShinobiMonitor monitor : monitors.values()) {
-				if (monitor.recording == true) {
-					size++;
-				}
-			}
-			cellData = new Object[size][2];
-			for (ShinobiMonitor monitor : monitors.values()) {
-				if (monitor.recording == true) {
-					cellData[row][0] = monitor.name;
-					cellData[row++][1] = monitor.mid;
-				}
-			}	
-		}
-		
-		
-		for (Object[] cell:cellData) {
-			if (cell[0] == null) {
-				
-			}
-		}
-		
-		table.setModel(new DefaultTableModel(
-	        	cellData,
-	        	new String[] {
-	        		"Name", "Monitor ID"
-	        	}
-	        ));
-		table.getColumn("Name").setPreferredWidth(400);
-		table.getColumn("Monitor ID").setPreferredWidth(1);
-		
-		// hide monitor ID column :)
-		TableColumnModel tcm = table.getColumnModel();
-		tcm.removeColumn( tcm.getColumn(1) );
-	}
 
 	
 	public enum TimePeriod {
@@ -927,5 +988,4 @@ public class PlayerUI extends javax.swing.JFrame {
 	public double getSpeed() {
 		return (Double) spinnerPlaybackSpeed.getValue();
 	}
-
 }

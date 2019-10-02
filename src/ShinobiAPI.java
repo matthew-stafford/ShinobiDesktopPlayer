@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.TreeMap;
 
@@ -21,25 +22,24 @@ import com.google.gson.JsonParser;
 
 public class ShinobiAPI {
 
-	private String api_key;
-	private String host;
-	private String group_key;
-	private TreeMap<String, ShinobiMonitor> monitors = new TreeMap<String, ShinobiMonitor>();
+	private ShinobiSite site;
 	
-	public ShinobiAPI(String api_key, String host, String group_key) {
-		this.api_key = api_key;
-		this.host = host;
-		this.group_key = group_key;
+	public ShinobiAPI(ShinobiSite site) {
+		this.site = site;
 	}
 
-	public boolean checkAPIValidAndGetMonitors() {
+	public TreeMap<String, ShinobiMonitor> checkAPIValidAndGetMonitors() {
+		System.out.println("Loading monitors");
 		try {
-			String url = "/"+api_key+"/monitor/"+group_key;
+			TreeMap<String, ShinobiMonitor> monitors = new TreeMap<String, ShinobiMonitor>();
+			
+			
+			String url = site.getBaseURL()+"/"+site.apiKey+"/monitor/"+site.groupKey;
 			
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			
-			System.out.println("Visiting "+host+url);
-			HttpGet httpGet = new HttpGet(host+url);
+			System.out.println("Visiting "+url);
+			HttpGet httpGet = new HttpGet(url);
 			
 			CloseableHttpResponse response = httpclient.execute(httpGet);
 			try {
@@ -59,7 +59,7 @@ public class ShinobiAPI {
 				    jobject = jobject.getAsJsonObject();
 				    String auth = jobject.get("msg").getAsString();
 				    if (auth.equalsIgnoreCase("Not Authorized")) {
-				    	return false;
+				    	return null;
 				    }
 			    } catch (Exception e) {
 			    	// Should throw an illegal state exception if api key is correct
@@ -70,11 +70,11 @@ public class ShinobiAPI {
 			    JsonArray jarray = jelement.getAsJsonArray();
 			    for (JsonElement element : jarray) {
 			    	JsonObject monitor_data = element.getAsJsonObject();
-			    	ShinobiMonitor monitor = new ShinobiMonitor();
+			    	ShinobiMonitor monitor = new ShinobiMonitor(site);
 			    	monitor.mid = monitor_data.get("mid").getAsString();
 			    	monitor.name = monitor_data.get("name").getAsString();
 			    	if (monitor_data.get("streams").getAsJsonArray().size() > 0) {
-				    	monitor.stream = host+""+monitor_data.get("streams").getAsJsonArray().get(0).getAsString();
+				    	monitor.stream = site.getBaseURL()+""+monitor_data.get("streams").getAsJsonArray().get(0).getAsString();
 			    	}
 			    	
 			    	if (monitor_data.get("status") != null) {
@@ -82,13 +82,10 @@ public class ShinobiAPI {
 				    		monitor.recording = true;
 				    	}
 			    	}
-			    	monitor.api_key = api_key;
-			    	monitor.group_key = group_key;
-			    	monitor.host = host;
 			    	monitors.put(monitor.mid, monitor);
 			    }
 			    
-			    return true;			    
+			    return monitors;			    
 			    
 			} finally {
 			    response.close();
@@ -103,10 +100,10 @@ public class ShinobiAPI {
 			}
 		}
 				
-		return false;
+		return null;
 	}
 	
-	public void getMotionEventData(String monitorId, Date date) {
+	public void getMotionEventData(String monitorId, Date date, int limit) {
 		if (monitorId == null || monitorId.trim().length() < 1) {
 			return;
 		}
@@ -114,16 +111,34 @@ public class ShinobiAPI {
 			return;
 		}
 		
+		// create calendar instance to create start/end dates from the date provided
+		Calendar cal = Calendar.getInstance();
+		// set date to the date provided
+		cal.setTime(date);
+		
+		// clear the hours,minutes,seconds for start date and end date
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		
+		// create start date
+		Date startDate = cal.getTime();
+		
+		// add 1 day to calendar to get end date
+		cal.add(Calendar.DATE, 1);
+		Date endDate= cal.getTime();
 		
 		try {
-			String url = "/"+api_key+"/events/"+group_key+"/"+monitorId+"/2000";
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+			SimpleDateFormat key = new SimpleDateFormat("yyMMdd");
+			
+			String url = site.getBaseURL()+"/"+site.apiKey+"/events/"+site.groupKey+"/"+monitorId+"?start="+sdf.format(startDate)+"&end="+sdf.format(endDate)+"&limit="+limit;
 			
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			
-			System.out.println("Visiting "+host+url);
-			HttpGet httpGet = new HttpGet(host+url);
+			System.out.println("Visiting "+url);
+			HttpGet httpGet = new HttpGet(url);
 			
-			SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd");
 			
 			CloseableHttpResponse response = httpclient.execute(httpGet);
 			try {
@@ -146,17 +161,17 @@ public class ShinobiAPI {
 			    	MotionEvent me = new MotionEvent();
 			    	me.timeInMilliseconds = monitor_data.get("time").getAsLong();			    	
 			    	Date d = new Date(me.timeInMilliseconds);			    	
-			    	monitors.get(monitorId).motionDays.add(sdf.format(d));
+			    	site.getMonitors().get(monitorId).motionDays.add(key.format(d));
 			    	
 			    	if (monitor_data.get("details").getAsJsonObject().isJsonObject()) {
 			    		me.confidence = monitor_data.get("details").getAsJsonObject().get("confidence").getAsByte();
 			    	}
-			    	if (monitors.get(monitorId).motionEvents.get(sdf.format(d)) == null) {
-			    		monitors.get(monitorId).motionEvents.put(sdf.format(d), new ArrayList<MotionEvent>());
+			    	if (site.getMonitors().get(monitorId).motionEvents.get(key.format(d)) == null) {
+			    		site.getMonitors().get(monitorId).motionEvents.put(key.format(d), new ArrayList<MotionEvent>());
 			    	}
 			    	
-			    	monitors.get(monitorId).motionEvents.get(sdf.format(d)).add(me);		    	
-			    	
+			    	site.getMonitors().get(monitorId).motionEvents.get(key.format(d)).add(me);		    	
+			    	System.out.println("Monitor event added to motion events");
 			    }			    	    
 			    
 			} finally {
@@ -175,15 +190,12 @@ public class ShinobiAPI {
 	
 	public void getVideoData(Date date) {
 		// clear prev video data
-		for (ShinobiMonitor monitor:monitors.values()) {
+		for (ShinobiMonitor monitor:site.getMonitors().values()) {
 			if (monitor.recording) {				
 				monitor.LoadVideos(date);
 			}
 		}
 	}
 	
-	public TreeMap<String, ShinobiMonitor> getMonitors() {
-		return this.monitors;
-	}
 	
 }

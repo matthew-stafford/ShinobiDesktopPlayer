@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -9,12 +10,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 
+import io.mappedbus.MappedBusReader;
+
 public class MPVManager implements Runnable {
 
 	public static ArrayList<Process> processes = new ArrayList<Process>();
 	public ArrayList<String> playlist = new ArrayList<String>();
 	public String cmd;
 	private Process process = null;
+	private boolean userStopped = false;
+	private Thread processMonitorThread = null;
 	
 	public String getValueFromResult(String json, String key) {
 		try {
@@ -55,7 +60,7 @@ public class MPVManager implements Runnable {
 		String result = "";
 		try {
 			p = new ProcessBuilder(new String[] {"bash","-c", cmd})
-	                .redirectErrorStream(true)
+					.redirectErrorStream(true)
 	                .start();
 	        BufferedReader br = new BufferedReader(
 	                new InputStreamReader(p.getInputStream()));
@@ -86,34 +91,43 @@ public class MPVManager implements Runnable {
 		t1.start();
 	}
 	
+	
 	@Override
 	public void run() {
         System.out.println(cmd);
-        try {
-             process = 
-                new ProcessBuilder(new String[] {"bash","-c", cmd})
-                    .redirectErrorStream(true)
-                    .start();
-            BufferedReader br = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
-                String line = null;
-                processes.add(process);
-                while ( (line = br.readLine()) != null ) {
-                	
-                }
-                if (process.isAlive()) {
-                	process.destroyForcibly();
-                }
-        } catch (Exception e) {
-        	e.printStackTrace();
-        } finally {        	
-        	if (process != null && process.isAlive()) {
-        		process.destroyForcibly();
-        	}
+        while (!userStopped) {
+	        try {
+	             process = 
+	                new ProcessBuilder(new String[] {"bash","-c", cmd})
+	                    .redirectErrorStream(true)
+	                    .start();
+	            BufferedReader br = new BufferedReader(
+	                    new InputStreamReader(process.getInputStream()));
+	                String line = null;
+	                processes.add(process);
+	                while ( (line = br.readLine()) != null ) {
+	                	
+	                }
+	                if (process.isAlive()) {
+	                	process.destroyForcibly();
+	                }
+	        } catch (Exception e) {
+	        	e.printStackTrace();
+	        } finally {        	
+	        	if (process != null && process.isAlive()) {
+	        		process.destroyForcibly();
+	        	}
+	        }
+	        if (!userStopped) {
+	        	System.err.println("MPV process stopped. Restarting!");
+	        } else {
+	        	System.out.println("MPV process closing.");
+	        }
         }
 	}
 	
 	public void kill() {
+		userStopped = true;
 		if (process != null && process.isAlive()) {
 			process.destroyForcibly();
 		}
@@ -125,6 +139,10 @@ public class MPVManager implements Runnable {
 				p.destroyForcibly();
 			}
 		}
+	}
+
+	public boolean isStopped() {
+		return userStopped;
 	}
 	
 	
