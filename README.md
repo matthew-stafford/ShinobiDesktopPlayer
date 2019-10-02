@@ -6,9 +6,13 @@ must have the following installed:
 
 socat (used for IPC pipe between application and mpv), xwininfo (used to get windowID of java canvas) & mpv (for playback of the video files)
 
-sudo apt install socat 
-sudo apt install xwininfo
-sudo apt install mpv
+<h3>Ubuntu system requirements install</h3>
+
+sudo apt install socat xwininfo mpv
+
+<h3>Arch/Manjaro system requirements install</h3>
+
+sudo pacman -S socat mpv xorg-wininfo
 
 <h2>Instructions</h2>
 Download latest release from <a href="https://github.com/matthew-stafford/ShinobiDesktopPlayer/releases" target="_blank">here</a> and extract .jar file. Open a terminal and ensure it is executable by typing 'chmod +x /path/to/ShinobiDesktopPlayer.jar'

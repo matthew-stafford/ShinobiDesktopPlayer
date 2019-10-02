@@ -85,7 +85,7 @@ public class PlayerUI extends javax.swing.JFrame {
 	public static String apiKey;
 	public static String windowTitle = "Shinobi Desktop Player";
 	public static String groupKey;
-
+	private PlayerUI ui;
 
 	public ArrayList<ShinobiSite> sites = new ArrayList<ShinobiSite>();
 	
@@ -98,7 +98,7 @@ public class PlayerUI extends javax.swing.JFrame {
 	private JTree tree;
 	
     public PlayerUI() {
-    	
+    	this.ui = this;
     	// load sites
     	this.windowTitle = generateWindowTitle();
     	
@@ -178,6 +178,12 @@ public class PlayerUI extends javax.swing.JFrame {
         jLabel3.setText("Sites / Monitors");
         
         btnSettings = new JButton("");
+        btnSettings.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+        		SettingsUI settings = new SettingsUI(ui);
+        		settings.setVisible(true);
+        	}
+        });
         btnSettings.setEnabled(true);
         btnSettings.setIcon(new ImageIcon(PlayerUI.class.getResource("/assets/icons8-settings-32.png")));
         
@@ -656,7 +662,7 @@ public class PlayerUI extends javax.swing.JFrame {
 	    return null;
     }
 
-    private DefaultMutableTreeNode createSiteTree() {
+    public void createSiteTree() {
     	
     	DefaultMutableTreeNode root = new DefaultMutableTreeNode("Sites");
         
@@ -692,8 +698,6 @@ public class PlayerUI extends javax.swing.JFrame {
     	for (int i = 0; i < tree.getRowCount(); i++) {
     	    tree.expandRow(i);
     	}
-    	
-    	return root;
 	}
 
 	/**
